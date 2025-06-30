@@ -369,8 +369,7 @@ View the [contributing guidelines](.github/CONTRIBUTING.md) and please follow th
 ### How can I help?
 All kinds of contributions are welcome :raised_hands:!
 The most basic way to show your support is to star :star2: the project, or to raise issues :speech_balloon:.
-You can also support this project by [becoming a sponsor on GitHub](https://github.com/sponsors/bsv-blockchain) :clap:
-or by making a [**bitcoin donation**](https://gobitcoinsv.com/#sponsor?utm_source=github&utm_medium=sponsor-link&utm_campaign=go-wire&utm_term=go-wire&utm_content=go-wire) to ensure this journey continues indefinitely! :rocket:
+You can also support this project by [becoming a sponsor on GitHub](https://github.com/sponsors/bsv-blockchain) :clap: to ensure this journey continues indefinitely! :rocket:
 
 [![Stars](https://img.shields.io/github/stars/bsv-blockchain/go-wire?label=Please%20like%20us&style=social&v=1)](https://github.com/bsv-blockchain/go-wire/stargazers)
 
