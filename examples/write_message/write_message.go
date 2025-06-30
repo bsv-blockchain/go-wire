@@ -1,9 +1,11 @@
+// Package main provides an example of how to write a bitcoin message
 package main
 
 import (
 	"bufio"
-	"github.com/bsv-blockchain/go-wire"
 	"os"
+
+	"github.com/bsv-blockchain/go-wire"
 )
 
 func main() {

@@ -2,10 +2,11 @@ package main
 
 import (
 	"bytes"
-	"fmt"
-	"github.com/bsv-blockchain/go-wire"
+	"log"
 	"net"
 	"time"
+
+	"github.com/bsv-blockchain/go-wire"
 )
 
 func main() {
@@ -24,23 +25,24 @@ func main() {
 	me.Timestamp = time.Time{} // Version message has zero value timestamp.
 	msgVersion := wire.NewMsgVersion(me, you, 123123, 0)
 
-	// Write message to buffer
+	// Write a message to buffer
 	_, err := wire.WriteMessageN(&buf, msgVersion, pVer, bsvNet)
 	if err != nil {
 		panic(err)
 	}
 
 	// construct read buffer from bytes
-	rbuf := bytes.NewReader(buf.Bytes())
+	readBuf := bytes.NewReader(buf.Bytes())
 
 	// Reads and validates the next bitcoin message from conn using the
 	// protocol version pver and the bitcoin network bsvnet.  The returns
 	// are a wire.Message, a []byte which contains the unmarshalled
 	// raw payload, and a possible error.
-	msg, _, err := wire.ReadMessage(rbuf, pVer, bsvNet)
+	var msg wire.Message
+	msg, _, err = wire.ReadMessage(readBuf, pVer, bsvNet)
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println(msg)
+	log.Println(msg)
 }
