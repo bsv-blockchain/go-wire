@@ -12,8 +12,8 @@ import (
 )
 
 // maxFlagsPerMerkleBlock returns the maximum number of flag bytes that could
-// possibly fit into a merkle block.  Since each transaction is represented by
-// a single bit, this is the max number of transactions per block divided by
+// possibly fit into a merkle block.  Since a single bit represents each transaction
+// , this is the max number of transactions per block divided by
 // 8 bits per byte.  Then an extra one to cover partials.
 func maxFlagsPerMerkleBlock() uint64 {
 	return maxTxPerBlock() / 8
@@ -45,7 +45,7 @@ func (msg *MsgMerkleBlock) AddTxHash(hash *chainhash.Hash) error {
 
 // Bsvdecode decodes r using the bitcoin protocol encoding into the receiver.
 // This is part of the Message interface implementation.
-func (msg *MsgMerkleBlock) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) error {
+func (msg *MsgMerkleBlock) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding) error {
 	if pver < BIP0037Version {
 		str := fmt.Sprintf("merkleblock message invalid for protocol "+
 			"version %d", pver)
@@ -74,7 +74,7 @@ func (msg *MsgMerkleBlock) Bsvdecode(r io.Reader, pver uint32, enc MessageEncodi
 		return messageError("MsgMerkleBlock.Bsvdecode", str)
 	}
 
-	// Create a contiguous slice of hashes to deserialize into in order to
+	// Create a contiguous slice of hashes to deserialize into to
 	// reduce the number of allocations.
 	hashes := make([]chainhash.Hash, count)
 	msg.Hashes = make([]*chainhash.Hash, 0, count)
@@ -82,12 +82,15 @@ func (msg *MsgMerkleBlock) Bsvdecode(r io.Reader, pver uint32, enc MessageEncodi
 	for i := uint64(0); i < count; i++ {
 		hash := &hashes[i]
 
-		err := readElement(r, hash)
+		err = readElement(r, hash)
 		if err != nil {
 			return err
 		}
 
-		msg.AddTxHash(hash)
+		err = msg.AddTxHash(hash)
+		if err != nil {
+			return err
+		}
 	}
 
 	msg.Flags, err = ReadVarBytes(r, pver, maxFlagsPerMerkleBlock(),
@@ -98,7 +101,7 @@ func (msg *MsgMerkleBlock) Bsvdecode(r io.Reader, pver uint32, enc MessageEncodi
 
 // BsvEncode encodes the receiver to w using the bitcoin protocol encoding.
 // This is part of the Message interface implementation.
-func (msg *MsgMerkleBlock) BsvEncode(w io.Writer, pver uint32, enc MessageEncoding) error {
+func (msg *MsgMerkleBlock) BsvEncode(w io.Writer, pver uint32, _ MessageEncoding) error {
 	if pver < BIP0037Version {
 		str := fmt.Sprintf("merkleblock message invalid for protocol "+
 			"version %d", pver)
@@ -153,7 +156,7 @@ func (msg *MsgMerkleBlock) Command() string {
 
 // MaxPayloadLength returns the maximum length the payload can be for the
 // receiver.  This is part of the Message interface implementation.
-func (msg *MsgMerkleBlock) MaxPayloadLength(pver uint32) uint64 {
+func (msg *MsgMerkleBlock) MaxPayloadLength(_ uint32) uint64 {
 	return MaxBlockPayload()
 }
 

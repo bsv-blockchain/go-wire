@@ -10,7 +10,7 @@ import (
 )
 
 // MsgNotFound defines a bitcoin notfound message which is sent in response to
-// a getdata message if any of the requested data in not available on the peer.
+// a getdata message if any of the requested data is not available on the peer.
 // Each message is limited to a maximum number of inventory vectors, which is
 // currently 50,000.
 //
@@ -35,7 +35,7 @@ func (msg *MsgNotFound) AddInvVect(iv *InvVect) error {
 
 // Bsvdecode decodes r using the bitcoin protocol encoding into the receiver.
 // This is part of the Message interface implementation.
-func (msg *MsgNotFound) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) error {
+func (msg *MsgNotFound) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding) error {
 	count, err := ReadVarInt(r, pver)
 	if err != nil {
 		return err
@@ -47,20 +47,20 @@ func (msg *MsgNotFound) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding)
 		return messageError("MsgNotFound.Bsvdecode", str)
 	}
 
-	// Create a contiguous slice of inventory vectors to deserialize into in
-	// order to reduce the number of allocations.
+	// Create a contiguous slice of inventory vectors to deserialize into
+	// to reduce the number of allocations.
 	invList := make([]InvVect, count)
 	msg.InvList = make([]*InvVect, 0, count)
 
 	for i := uint64(0); i < count; i++ {
 		iv := &invList[i]
 
-		err := readInvVect(r, pver, iv)
+		err = readInvVect(r, pver, iv)
 		if err != nil {
 			return err
 		}
 
-		msg.AddInvVect(iv)
+		_ = msg.AddInvVect(iv)
 	}
 
 	return nil
@@ -68,7 +68,7 @@ func (msg *MsgNotFound) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding)
 
 // BsvEncode encodes the receiver to w using the bitcoin protocol encoding.
 // This is part of the Message interface implementation.
-func (msg *MsgNotFound) BsvEncode(w io.Writer, pver uint32, enc MessageEncoding) error {
+func (msg *MsgNotFound) BsvEncode(w io.Writer, pver uint32, _ MessageEncoding) error {
 	// Limit to max inventory vectors per message.
 	count := len(msg.InvList)
 	if count > MaxInvPerMsg {
@@ -99,7 +99,7 @@ func (msg *MsgNotFound) Command() string {
 
 // MaxPayloadLength returns the maximum length the payload can be for the
 // receiver.  This is part of the Message interface implementation.
-func (msg *MsgNotFound) MaxPayloadLength(pver uint32) uint64 {
+func (msg *MsgNotFound) MaxPayloadLength(_ uint32) uint64 {
 	// Max var int 9 bytes + max InvVects at 36 bytes each.
 	// Num inventory vectors (varInt) + max allowed inventory vectors.
 	return MaxVarIntPayload + (MaxInvPerMsg * maxInvVectPayload)
