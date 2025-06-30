@@ -183,12 +183,18 @@ jobs:
             # 5. Auto-approve minor / patch bumps
             # -----------------------------------------------------------------------
             - name: Auto-approve minor update
+              id: auto_approve
               if: steps.bump.outputs.is_minor == 'true'
+              continue-on-error: true
               uses: hmarr/auto-approve-action@f0939ea97e9205ef24d872e76833fa908a770363 # v4.0.0
               with:
                   github-token: ${{ secrets.GITHUB_TOKEN }}
                   pull-request-number: ${{ steps.pr.outputs.number }}   # ← NEW
                   review-message: Automatically approving Dependabot minor/patch update
+
+            - name: Warn if auto-approve fails
+              if: steps.auto_approve.outcome != 'success' && steps.bump.outputs.is_minor == 'true'
+              run: echo "::warning::Auto-approval failed; GitHub Actions may not be permitted to approve its own PRs."
 
             # -----------------------------------------------------------------------
             # 6. Add the required `automerge` label (used by pascalgn/automerge)
