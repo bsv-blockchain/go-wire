@@ -7,6 +7,7 @@ package wire
 import (
 	"bytes"
 	"crypto/rand"
+	"errors"
 	"io"
 	"reflect"
 	"testing"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/libsv/go-bt/v2/chainhash"
+	"github.com/stretchr/testify/require"
 )
 
 // TestMerkleBlock tests the MsgMerkleBlock API.
@@ -37,7 +39,7 @@ func TestMerkleBlock(t *testing.T) {
 			cmd, wantCmd)
 	}
 
-	// Ensure max payload is expected value for a latest protocol version.
+	// Ensure max payload is expected value for the latest protocol version.
 	// Num addresses (varInt) + max allowed addresses.
 	wantPayload := fixedExcessiveBlockSize
 	maxPayload := msg.MaxPayloadLength(pver)
@@ -51,9 +53,11 @@ func TestMerkleBlock(t *testing.T) {
 	// Load maxTxPerBlock hashes
 	data := make([]byte, 32)
 	for i := uint64(0); i < maxTxPerBlock(); i++ {
-		rand.Read(data)
+		_, err := rand.Read(data)
+		require.NoError(t, err)
 
-		hash, err := chainhash.NewHash(data)
+		var hash *chainhash.Hash
+		hash, err = chainhash.NewHash(data)
 		if err != nil {
 			t.Errorf("NewHash failed: %v\n", err)
 			return
@@ -66,9 +70,11 @@ func TestMerkleBlock(t *testing.T) {
 	}
 
 	// Add one more Tx to test failure.
-	rand.Read(data)
+	_, err := rand.Read(data)
+	require.NoError(t, err)
 
-	hash, err := chainhash.NewHash(data)
+	var hash *chainhash.Hash
+	hash, err = chainhash.NewHash(data)
 	if err != nil {
 		t.Errorf("NewHash failed: %v\n", err)
 		return
@@ -130,7 +136,7 @@ func TestMerkleBlockCrossProtocol(t *testing.T) {
 
 	msg := NewMsgMerkleBlock(bh)
 
-	// Encode with latest protocol version.
+	// Encode with the latest protocol version.
 	var buf bytes.Buffer
 
 	err := msg.BsvEncode(&buf, ProtocolVersion, BaseEncoding)
@@ -139,7 +145,7 @@ func TestMerkleBlockCrossProtocol(t *testing.T) {
 			err)
 	}
 
-	// Decode with old protocol version.
+	// Decode with an old protocol version.
 	var readmsg MsgFilterLoad
 
 	err = readmsg.Bsvdecode(&buf, BIP0031Version, BaseEncoding)
@@ -305,8 +311,9 @@ func TestMerkleBlockWireErrors(t *testing.T) {
 
 		// For errors which are not of type MessageError, check them for
 		// equality.
-		if _, ok := err.(*MessageError); !ok {
-			if err != test.writeErr {
+		var msgError *MessageError
+		if !errors.As(err, &msgError) {
+			if !errors.Is(err, test.writeErr) {
 				t.Errorf("BsvEncode #%d wrong error got: %v, "+
 					"want: %v", i, err, test.writeErr)
 				continue
@@ -327,8 +334,8 @@ func TestMerkleBlockWireErrors(t *testing.T) {
 
 		// For errors which are not of type MessageError, check them for
 		// equality.
-		if _, ok := err.(*MessageError); !ok {
-			if err != test.readErr {
+		if !errors.As(err, &msgError) {
+			if !errors.Is(err, test.readErr) {
 				t.Errorf("Bsvdecode #%d wrong error got: %v, "+
 					"want: %v", i, err, test.readErr)
 				continue
@@ -351,21 +358,21 @@ func TestMerkleBlockOverflowErrors(t *testing.T) {
 	// allowed tx hashes.
 	var buf bytes.Buffer
 
-	WriteVarInt(&buf, pver, uint64(maxTxPerBlock())+1)
+	err := WriteVarInt(&buf, pver, uint64(maxTxPerBlock())+1)
+	require.NoError(t, err)
 
 	numHashesOffset := 84
-	exceedMaxHashes := make([]byte, numHashesOffset)
-	copy(exceedMaxHashes, merkleBlockOneBytes[:numHashesOffset])
+	exceedMaxHashes := append([]byte{}, merkleBlockOneBytes[:numHashesOffset]...)
 	exceedMaxHashes = append(exceedMaxHashes, buf.Bytes()...)
 
 	// Create bytes for a merkle block that claims to have more than the max
 	// allowed flag bytes.
 	buf.Reset()
-	WriteVarInt(&buf, pver, uint64(maxFlagsPerMerkleBlock())+1)
+	err = WriteVarInt(&buf, pver, uint64(maxFlagsPerMerkleBlock())+1)
+	require.NoError(t, err)
 
 	numFlagBytesOffset := 117
-	exceedMaxFlagBytes := make([]byte, numFlagBytesOffset)
-	copy(exceedMaxFlagBytes, merkleBlockOneBytes[:numFlagBytesOffset])
+	exceedMaxFlagBytes := append([]byte{}, merkleBlockOneBytes[:numFlagBytesOffset]...)
 	exceedMaxFlagBytes = append(exceedMaxFlagBytes, buf.Bytes()...)
 
 	tests := []struct {
@@ -397,7 +404,7 @@ func TestMerkleBlockOverflowErrors(t *testing.T) {
 	}
 }
 
-// merkleBlockOne is a merkle block created from block one of the block chains
+// merkleBlockOne is a merkle block created from block one of the blockchains
 // where the first transaction matches.
 var merkleBlockOne = MsgMerkleBlock{
 	Header: BlockHeader{
