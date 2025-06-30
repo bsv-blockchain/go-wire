@@ -10,7 +10,6 @@
 
 # Documentation files
 *.md @icellan
-CITATION.cff @icellan
 
 # Build and makefiles
 Makefile @icellan
