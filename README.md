@@ -366,9 +366,40 @@ make bench
 
 ### Benchmark Results
 
-| Benchmark                          | Iterations | ns/op | B/op | allocs/op |
-|------------------------------------|------------|------:|-----:|----------:|
-| [Function](wire_benchmark_test.go) | 21,179,739 | 56.59 |   40 |         2 |
+| Benchmark           | Iterations | ns/op | B/op | allocs/op |
+|---------------------|-----------:|------:|-----:|----------:|
+| WriteVarInt1        | 41,781,031 |  28.41 |   0 |         0 |
+| WriteVarInt3        | 20,781,544 |  57.76 |   0 |         0 |
+| WriteVarInt5        | 20,617,789 |  57.24 |   0 |         0 |
+| WriteVarInt9        | 20,931,920 |  57.08 |   0 |         0 |
+| ReadVarInt1         | 34,902,406 |  34.07 |   0 |         0 |
+| ReadVarInt3         | 17,399,089 |  68.77 |   0 |         0 |
+| ReadVarInt5         | 17,409,764 |  68.85 |   0 |         0 |
+| ReadVarInt9         | 17,447,112 |  68.61 |   0 |         0 |
+| ReadVarStr4         | 19,051,372 |  61.96 |   8 |         2 |
+| ReadVarStr10        | 17,857,441 |  67.16 |  32 |         2 |
+| WriteVarStr4        | 27,119,715 |  44.39 |   8 |         1 |
+| WriteVarStr10       | 24,815,733 |  48.25 |  16 |         1 |
+| ReadOutPoint        | 27,905,300 |  43.20 |   0 |         0 |
+| WriteOutPoint       | 39,446,542 |  30.22 |   0 |         0 |
+| ReadTxOut           | 11,168,122 | 108.90 |   0 |         0 |
+| WriteTxOut          | 19,734,460 |  59.72 |   0 |         0 |
+| ReadTxIn            |  8,139,504 | 146.70 |   0 |         0 |
+| WriteTxIn           | 12,748,219 |  91.01 |   0 |         0 |
+| DeserializeTxSmall  |  2,328,372 | 514.80 | 208 |         5 |
+| SerializeTx         |  4,559,265 | 262.10 |   0 |         0 |
+| ReadBlockHeader     |  7,482,752 | 161.00 |   0 |         0 |
+| WriteBlockHeader    |  7,447,129 | 162.10 |  12 |         3 |
+| DecodeGetHeaders    |    198,272 | 6151.00 | 20480 |         2 |
+| DecodeHeaders       |      2,694 | 433745.00 | 229380 |         2 |
+| DecodeGetBlocks     |    201,636 | 6314.00 | 20480 |         2 |
+| DecodeAddr          |      7,966 | 147317.00 | 89729 |      1002 |
+| DecodeInv           |        452 | 2645229.00 | 2203664 |         2 |
+| DecodeNotFound      |        379 | 3141447.00 | 2203663 |         2 |
+| DecodeMerkleBlock   |    501,637 | 2257.00 | 4368 |         3 |
+| TxHash              |  2,055,020 | 574.40 | 256 |         2 |
+| DoubleHashB         |  6,299,563 | 190.20 |  32 |         1 |
+| DoubleHash          |  6,618,770 | 183.80 |   0 |         0 |
 
 > These benchmarks reflect fast, allocation-free lookups for most retrieval functions, ensuring optimal performance in production environments.
 > Performance benchmarks for the core functions in this library, executed on an Apple M1 Max (ARM64).
