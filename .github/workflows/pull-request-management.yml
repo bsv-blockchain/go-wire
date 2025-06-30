@@ -43,7 +43,7 @@ jobs:
             // ──────────────────────────────────────────────────────────────
             // 1. Label PRs by branch prefix
             // ──────────────────────────────────────────────────────────────
-            const DEFAULT_ASSIGNEE = 'bsv-blockchain'; // <-- Change this value to update the default assignee
+            const DEFAULT_ASSIGNEE = 'icellan'; // <-- Change this value to update the default assignee
             const branch = context.payload.pull_request.head.ref;
             const labels = [];
             const labelMap = [
