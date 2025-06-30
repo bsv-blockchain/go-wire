@@ -127,11 +127,11 @@ func TestElementWire(t *testing.T) {
 			},
 		},
 		{
-			ServiceFlag(SFNodeNetwork),
+			SFNodeNetwork,
 			[]byte{0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
 		},
 		{
-			InvType(InvTypeTx),
+			InvTypeTx,
 			[]byte{0x01, 0x00, 0x00, 0x00},
 		},
 		{

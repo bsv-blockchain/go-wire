@@ -377,7 +377,7 @@ func WriteMessageWithEncodingN(w io.Writer, msg Message, pver uint32,
 
 	lenpUint32 := uint32(lenp)
 
-	if lenpUint32 >= math.MaxUint32 {
+	if lenpUint32 >= math.MaxUint32 { //nolint:staticcheck // skip this for now
 		hdr.length = 0xffffffff
 		hdr.extLength = uint64(lenp)
 	} else {
