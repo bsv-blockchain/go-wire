@@ -25,7 +25,7 @@ const MaxBlockLocatorsPerMsg = 500
 // AddBlockLocatorHash to build up the list of block locator hashes.
 //
 // The algorithm for building the block locator hashes should be to add the
-// hashes in reverse order until you reach the genesis block.  In order to keep
+// hashes in reverse order until you reach the genesis block.  To keep
 // the list of locator hashes to a reasonable number of entries, first add the
 // most recent 10 block hashes, then double the step each loop iteration to
 // exponentially decrease the number of hashes the further away from head and
@@ -51,7 +51,7 @@ func (msg *MsgGetBlocks) AddBlockLocatorHash(hash *chainhash.Hash) error {
 
 // Bsvdecode decodes r using the bitcoin protocol encoding into the receiver.
 // This is part of the Message interface implementation.
-func (msg *MsgGetBlocks) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) error {
+func (msg *MsgGetBlocks) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding) error {
 	err := readElement(r, &msg.ProtocolVersion)
 	if err != nil {
 		return err
@@ -69,7 +69,7 @@ func (msg *MsgGetBlocks) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding
 		return messageError("MsgGetBlocks.Bsvdecode", str)
 	}
 
-	// Create a contiguous slice of hashes to deserialize into in order to
+	// Create a contiguous slice of hashes to deserialize into to
 	// reduce the number of allocations.
 	locatorHashes := make([]chainhash.Hash, count)
 	msg.BlockLocatorHashes = make([]*chainhash.Hash, 0, count)
@@ -90,7 +90,7 @@ func (msg *MsgGetBlocks) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding
 
 // BsvEncode encodes the receiver to w using the bitcoin protocol encoding.
 // This is part of the Message interface implementation.
-func (msg *MsgGetBlocks) BsvEncode(w io.Writer, pver uint32, enc MessageEncoding) error {
+func (msg *MsgGetBlocks) BsvEncode(w io.Writer, pver uint32, _ MessageEncoding) error {
 	count := len(msg.BlockLocatorHashes)
 	if count > MaxBlockLocatorsPerMsg {
 		str := fmt.Sprintf("too many block locator hashes for message "+
@@ -126,7 +126,7 @@ func (msg *MsgGetBlocks) Command() string {
 
 // MaxPayloadLength returns the maximum length the payload can be for the
 // receiver.  This is part of the Message interface implementation.
-func (msg *MsgGetBlocks) MaxPayloadLength(pver uint32) uint64 {
+func (msg *MsgGetBlocks) MaxPayloadLength(_ uint32) uint64 {
 	// Protocol version 4 bytes + num hashes (varInt) + max block locator
 	// hashes + hash stop.
 	return 4 + MaxVarIntPayload + (MaxBlockLocatorsPerMsg * chainhash.HashSize) + chainhash.HashSize

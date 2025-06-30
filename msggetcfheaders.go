@@ -11,7 +11,7 @@ import (
 )
 
 // MsgGetCFHeaders is a message similar to MsgGetHeaders, but for committed
-// filter headers. It allows to set the FilterType field to get headers in the
+// filter headers. It allows setting the FilterType field to get headers in the
 // chain of basic (0x00) or extended (0x01) headers.
 type MsgGetCFHeaders struct {
 	FilterType  FilterType
@@ -21,7 +21,7 @@ type MsgGetCFHeaders struct {
 
 // Bsvdecode decodes r using the bitcoin protocol encoding into the receiver.
 // This is part of the Message interface implementation.
-func (msg *MsgGetCFHeaders) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding) error {
+func (msg *MsgGetCFHeaders) Bsvdecode(r io.Reader, _ uint32, _ MessageEncoding) error {
 	err := readElement(r, &msg.FilterType)
 	if err != nil {
 		return err
@@ -37,7 +37,7 @@ func (msg *MsgGetCFHeaders) Bsvdecode(r io.Reader, pver uint32, _ MessageEncodin
 
 // BsvEncode encodes the receiver to w using the bitcoin protocol encoding.
 // This is part of the Message interface implementation.
-func (msg *MsgGetCFHeaders) BsvEncode(w io.Writer, pver uint32, _ MessageEncoding) error {
+func (msg *MsgGetCFHeaders) BsvEncode(w io.Writer, _ uint32, _ MessageEncoding) error {
 	err := writeElement(w, msg.FilterType)
 	if err != nil {
 		return err
@@ -59,7 +59,7 @@ func (msg *MsgGetCFHeaders) Command() string {
 
 // MaxPayloadLength returns the maximum length the payload can be for the
 // receiver.  This is part of the Message interface implementation.
-func (msg *MsgGetCFHeaders) MaxPayloadLength(pver uint32) uint64 {
+func (msg *MsgGetCFHeaders) MaxPayloadLength(_ uint32) uint64 {
 	// Filter type + uint32 + block hash
 	return 1 + 4 + chainhash.HashSize
 }
