@@ -1,10 +1,10 @@
-// Package main is an example of how to use the go-template package
+// Package main is an example of how to use the go-wire package
 package main
 
 import (
 	"log"
 
-	"github.com/mrz1836/go-template"
+	"github.com/bsv-blockchain/go-wire"
 )
 
 func main() {

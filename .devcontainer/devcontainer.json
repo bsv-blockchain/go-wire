@@ -1,4 +1,4 @@
 {
 	"extends": "./base.json",
-	"name": "go-template (default)"
+	"name": "go-wire (default)"
 }

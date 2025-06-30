@@ -1,6 +1,6 @@
 {
 	"extends": "./base.json",
-	"name": "go-template (with Docker socket)",
+	"name": "go-wire (with Docker socket)",
 
 	"features": {
 		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}

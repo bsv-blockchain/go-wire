@@ -1,5 +1,5 @@
 {
-	"name": "go-template base",
+	"name": "go-wire base",
 	"image": "mcr.microsoft.com/devcontainers/go:0-1.24.0-bullseye",
 
 	"features": {

@@ -7,7 +7,7 @@
 #
 #  Triggers: On PR open, synchronize, reopen, or ready for review.
 #
-#  Maintainer: @mrz1836
+#  Maintainer: @bsv-blockchain
 #
 #  Default Assignee: Set below in the 'DEFAULT_ASSIGNEE' variable.
 #
@@ -43,7 +43,7 @@ jobs:
             // ──────────────────────────────────────────────────────────────
             // 1. Label PRs by branch prefix
             // ──────────────────────────────────────────────────────────────
-            const DEFAULT_ASSIGNEE = 'mrz1836'; // <-- Change this value to update the default assignee
+            const DEFAULT_ASSIGNEE = 'bsv-blockchain'; // <-- Change this value to update the default assignee
             const branch = context.payload.pull_request.head.ref;
             const labels = [];
             const labelMap = [

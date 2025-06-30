@@ -5,7 +5,7 @@
 #
 #  Triggers: Pull‑request events, review submissions, and completed checks.
 #
-#  Maintainer: @mrz1836
+#  Maintainer: @bsv-blockchain
 #
 #  Rules for Auto‑Merge:
 #    • ≥1 approval review

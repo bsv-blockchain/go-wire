@@ -1,3 +1,3 @@
 FROM scratch
-COPY go-template /
-ENTRYPOINT ["/go-template"]
+COPY go-wire /
+ENTRYPOINT ["/go-wire"]

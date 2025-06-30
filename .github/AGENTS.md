@@ -18,7 +18,7 @@ Additional `AGENTS.md` files **may exist in subdirectories** to provide more con
 
 ## 🔍 Project Overview
 
-**go-template** is a production-ready scaffold for building new Go libraries with zero setup friction. 
+**go-wire** is a production-ready scaffold for building new Go libraries with zero setup friction. 
 It ships with opinionated defaults that reflect current best practices—clean project layout, 
 module-aware dependency management, and Makefiles that automate everything from linting and race-condition 
 testing to snapshot releases. Out of the box, GitHub Actions orchestrate CI/CD: unit tests (with `testify`), 
@@ -44,7 +44,7 @@ delivery and open-source collaboration from day one.
 | `.github/`  | Issue templates, workflows, and community documentation |
 | `.make/`    | Shared Makefile targets used by `Makefile`              |
 | `examples/` | Example program demonstrating package usage             |
-| `.` (root)  | Source files and tests for the `go-template` package    |
+| `.` (root)  | Source files and tests for the `go-wire` package    |
 
 <br/>
 
@@ -726,7 +726,7 @@ All contributors are expected to append entries here when making meaningful chan
 
 | Date       | Author   | Summary of Changes                                                             |
 |------------|----------|--------------------------------------------------------------------------------|
-| 2025-06-30 | @mrz1836 | Added pre-commit hook guidelines and config reference |
-| 2025-06-27 | @mrz1836 | Adapted to fix this project go-template                                        |
-| 2025-06-26 | @mrz1836 | Documented citation and configuration files for contributors                   |
+| 2025-06-30 | @bsv-blockchain | Added pre-commit hook guidelines and config reference |
+| 2025-06-27 | @bsv-blockchain | Adapted to fix this project go-wire                                        |
+| 2025-06-26 | @bsv-blockchain | Documented citation and configuration files for contributors                   |
 > For minor edits (typos, formatting), this log update is optional. For all behavioral or structural changes, log entries are **required**.
