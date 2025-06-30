@@ -3,20 +3,20 @@
 # The most specific rule that matches takes precedence.
 
 # Default owner for the entire repository
-* @bsv-blockchain
+* @icellan
 
 # GitHub Actions workflows
-.github/workflows/* @bsv-blockchain
+.github/workflows/* @icellan
 
 # Documentation files
-*.md @bsv-blockchain
-CITATION.cff @bsv-blockchain
+*.md @icellan
+CITATION.cff @icellan
 
 # Build and makefiles
-Makefile @bsv-blockchain
-.make/*.mk @bsv-blockchain
-*.mk @bsv-blockchain
+Makefile @icellan
+.make/*.mk @icellan
+*.mk @icellan
 
 # Go module dependencies
-go.mod @bsv-blockchain
-go.sum @bsv-blockchain
+go.mod @icellan
+go.sum @icellan
