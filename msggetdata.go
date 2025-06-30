@@ -38,7 +38,7 @@ func (msg *MsgGetData) AddInvVect(iv *InvVect) error {
 
 // Bsvdecode decodes r using the bitcoin protocol encoding into the receiver.
 // This is part of the Message interface implementation.
-func (msg *MsgGetData) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) error {
+func (msg *MsgGetData) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding) error {
 	count, err := ReadVarInt(r, pver)
 	if err != nil {
 		return err
@@ -50,20 +50,23 @@ func (msg *MsgGetData) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) 
 		return messageError("MsgGetData.Bsvdecode", str)
 	}
 
-	// Create a contiguous slice of inventory vectors to deserialize into in
-	// order to reduce the number of allocations.
+	// Create a contiguous slice of inventory vectors to deserialize into
+	// to reduce the number of allocations.
 	invList := make([]InvVect, count)
 	msg.InvList = make([]*InvVect, 0, count)
 
 	for i := uint64(0); i < count; i++ {
 		iv := &invList[i]
 
-		err := readInvVect(r, pver, iv)
+		err = readInvVect(r, pver, iv)
 		if err != nil {
 			return err
 		}
 
-		msg.AddInvVect(iv)
+		err = msg.AddInvVect(iv)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -71,7 +74,7 @@ func (msg *MsgGetData) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) 
 
 // BsvEncode encodes the receiver to w using the bitcoin protocol encoding.
 // This is part of the Message interface implementation.
-func (msg *MsgGetData) BsvEncode(w io.Writer, pver uint32, enc MessageEncoding) error {
+func (msg *MsgGetData) BsvEncode(w io.Writer, pver uint32, _ MessageEncoding) error {
 	// Limit to max inventory vectors per message.
 	count := len(msg.InvList)
 	if count > MaxInvPerMsg {
@@ -102,7 +105,7 @@ func (msg *MsgGetData) Command() string {
 
 // MaxPayloadLength returns the maximum length the payload can be for the
 // receiver.  This is part of the Message interface implementation.
-func (msg *MsgGetData) MaxPayloadLength(pver uint32) uint64 {
+func (msg *MsgGetData) MaxPayloadLength(_ uint32) uint64 {
 	// Num inventory vectors (varInt) + max allowed inventory vectors.
 	return MaxVarIntPayload + (MaxInvPerMsg * maxInvVectPayload)
 }
@@ -121,7 +124,7 @@ func NewMsgGetData() *MsgGetData {
 // backing array which houses the inventory vector list.  This allows callers
 // who know in advance how large the inventory list will grow to avoid the
 // overhead of growing the internal backing array several times when appending
-// large amounts of inventory vectors with AddInvVect.  Note that the specified
+// large numbers of inventory vectors with AddInvVect.  Note that the specified
 // hint is just that - a hint that is used for the default allocation size.
 // Adding more (or less) inventory vectors will still work properly.  The size
 // hint is limited to MaxInvPerMsg.
