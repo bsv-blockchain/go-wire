@@ -5,7 +5,7 @@
 #
 #  Triggers: On pull request close events.
 #
-#  Maintainer: @bsv-blockchain
+#  Maintainer: @icellan
 # ------------------------------------------------------------------------------
 
 name: clean-runner-cache

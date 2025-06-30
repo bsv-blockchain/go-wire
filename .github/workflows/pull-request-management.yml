@@ -7,7 +7,7 @@
 #
 #  Triggers: On PR open, synchronize, reopen, or ready for review.
 #
-#  Maintainer: @bsv-blockchain
+#  Maintainer: @icellan
 #
 #  Default Assignee: Set below in the 'DEFAULT_ASSIGNEE' variable.
 #

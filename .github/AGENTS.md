@@ -724,9 +724,9 @@ This section tracks notable updates to `AGENTS.md`, including the date, author, 
 All contributors are expected to append entries here when making meaningful changes to agent behavior, conventions, or policies.
 
 
-| Date       | Author   | Summary of Changes                                                             |
-|------------|----------|--------------------------------------------------------------------------------|
-| 2025-06-30 | @bsv-blockchain | Added pre-commit hook guidelines and config reference |
-| 2025-06-27 | @bsv-blockchain | Adapted to fix this project go-wire                                        |
-| 2025-06-26 | @bsv-blockchain | Documented citation and configuration files for contributors                   |
+| Date       | Author   | Summary of Changes                                           |
+|------------|----------|--------------------------------------------------------------|
+| 2025-06-30 | @icellan | Added pre-commit hook guidelines and config reference        |
+| 2025-06-27 | @icellan | Adapted to fix this project go-wire                          |
+| 2025-06-26 | @icellan | Documented citation and configuration files for contributors |
 > For minor edits (typos, formatting), this log update is optional. For all behavioral or structural changes, log entries are **required**.
