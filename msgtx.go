@@ -22,7 +22,7 @@ const (
 	MaxTxInSequenceNum uint32 = 0xffffffff
 
 	// MaxPrevOutIndex is the maximum index the index field of a previous
-	// outpoint can be.
+	// outpointing can be.
 	MaxPrevOutIndex uint32 = 0xffffffff
 
 	// SequenceLockTimeDisabled is a flag that if set on a transaction
@@ -39,7 +39,7 @@ const (
 	// when masked against the transaction input sequence number.
 	SequenceLockTimeMask = 0x0000ffff
 
-	// SequenceLockTimeGranularity is the defined time based granularity
+	// SequenceLockTimeGranularity is the defined time-based granularity
 	// for seconds-based relative time locks. When converting from seconds
 	// to a sequence number, the value is right shifted by this amount,
 	// therefore the granularity of relative time locks in 512 or 2^9
@@ -87,32 +87,32 @@ const (
 	freeListMaxItems = 12500
 )
 
-// maxTxInPerMessage returnsthe maximum number of transactions inputs that
+// maxTxInPerMessage returns the maximum number of transaction inputs that
 // a transaction which fits into a message could possibly have.
 func maxTxInPerMessage() uint64 {
 	return (maxMessagePayload() / minTxInPayload) + 1
 }
 
-// maxTxOutPerMessage returns the maximum number of transactions outputs that
+// maxTxOutPerMessage returns the maximum number of transaction outputs that
 // a transaction which fits into a message could possibly have.
 func maxTxOutPerMessage() uint64 {
 	return (maxMessagePayload() / MinTxOutPayload) + 1
 }
 
 // scriptFreeList defines a free list of byte slices (up to the maximum number
-// defined by the freeListMaxItems constant) that have a cap according to the
+// defined by the freeListMaxItems constant) that has a cap according to the
 // freeListMaxScriptSize constant.  It is used to provide temporary buffers for
-// deserializing scripts in order to greatly reduce the number of allocations
+// deserializing scripts to greatly reduce the number of allocations
 // required.
 //
-// The caller can obtain a buffer from the free list by calling the Borrow
+// The caller can get a buffer from the free list by calling the Borrow
 // function and should return it via the Return function when done using it.
 type scriptFreeList chan []byte
 
 // Borrow returns a byte slice from the free list with a length according the
 // provided size.  A new buffer is allocated if there are any items available.
 //
-// When the size is larger than the max size allowed for items on the free list
+// When the size is larger than the max size allowed for items on the free list,
 // a new buffer of the appropriate size is allocated and returned.  It is safe
 // to attempt to return said buffer via the Return function as it will be
 // ignored and allowed to go the garbage collector.
@@ -134,7 +134,7 @@ func (c scriptFreeList) Borrow(size uint64) []byte {
 // Return puts the provided byte slice back on the free list when it has a cap
 // of the expected length.  The buffer is expected to have been obtained via
 // the Borrow function.  Any slices that are not of the appropriate size, such
-// as those whose size is greater than the largest allowed free list item size
+// as those whose size is greater than the largest allowed free list item size,
 // are simply ignored so they can go to the garbage collector.
 func (c scriptFreeList) Return(buf []byte) {
 	// Ignore any buffers returned that aren't the expected size for the
@@ -143,7 +143,7 @@ func (c scriptFreeList) Return(buf []byte) {
 		return
 	}
 
-	// Return the buffer to the free list when it's not full.  Otherwise let
+	// Return the buffer to the free list when it's not full.  Otherwise, let
 	// it be garbage collected.
 	select {
 	case c <- buf:
@@ -157,7 +157,7 @@ func (c scriptFreeList) Return(buf []byte) {
 // the number of allocations.
 var scriptPool scriptFreeList = make(chan []byte, freeListMaxItems)
 
-// OutPoint defines a bitcoin data type that is used to track previous
+// OutPoint defines a bitcoin data type used to track previous
 // transaction outputs.
 type OutPoint struct {
 	Hash  chainhash.Hash
@@ -197,7 +197,8 @@ type TxIn struct {
 }
 
 // SerializeSize returns the number of bytes it would take to serialize the
-// the transaction input.
+//
+//	transaction input.
 func (t *TxIn) SerializeSize() int {
 	// Outpoint Hash 32 bytes + Outpoint Index 4 bytes + Sequence 4 bytes +
 	// serialized varint size for the length of SignatureScript +
@@ -207,7 +208,7 @@ func (t *TxIn) SerializeSize() int {
 }
 
 // NewTxIn returns a new bitcoin transaction input with the provided
-// previous outpoint point and signature script with a default sequence of
+// previous outpointed point and signature script with a default sequence of
 // MaxTxInSequenceNum.
 func NewTxIn(prevOut *OutPoint, signatureScript []byte) *TxIn {
 	return &TxIn{
@@ -224,7 +225,8 @@ type TxOut struct {
 }
 
 // SerializeSize returns the number of bytes it would take to serialize the
-// the transaction output.
+//
+//	transaction output.
 func (t *TxOut) SerializeSize() int {
 	// Value 8 bytes + serialized varint size for the length of PkScript +
 	// PkScript bytes.
@@ -270,7 +272,7 @@ func (msg *MsgTx) TxHash() chainhash.Hash {
 	// is being out of memory or due to nil pointers, both of which would
 	// cause a run-time panic.
 	buf := bytes.NewBuffer(make([]byte, 0, msg.SerializeSize()))
-	msg.Serialize(buf)
+	_ = msg.Serialize(buf)
 
 	return chainhash.DoubleHashH(buf.Bytes())
 }
@@ -289,10 +291,10 @@ func (msg *MsgTx) Copy() *MsgTx {
 
 	// Deep copy the old TxIn data.
 	for _, oldTxIn := range msg.TxIn {
-		// Deep copy the old previous outpoint.
+		// Deep copy the old previous outpointing.
 		oldOutPoint := oldTxIn.PreviousOutPoint
 		newOutPoint := OutPoint{}
-		newOutPoint.Hash.SetBytes(oldOutPoint.Hash[:])
+		_ = newOutPoint.Hash.SetBytes(oldOutPoint.Hash[:])
 		newOutPoint.Index = oldOutPoint.Index
 
 		// Deep copy the old signature script.
@@ -346,7 +348,7 @@ func (msg *MsgTx) Copy() *MsgTx {
 // This is part of the Message interface implementation.
 // See Deserialize for decoding transactions stored to disk, such as in a
 // database, as opposed to decoding transactions from the wire.
-func (msg *MsgTx) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) error {
+func (msg *MsgTx) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding) error {
 	version, err := binarySerializer.Uint32(r, littleEndian)
 	if err != nil {
 		return err
@@ -360,7 +362,7 @@ func (msg *MsgTx) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) error
 	}
 
 	// Prevent more input transactions than could possibly fit into a
-	// message.  It would be possible to cause memory exhaustion and panics
+	// message.  It would be possible to cause memory exhaustion and panic
 	// without a sane upper bound on this count.
 	if count > maxTxInPerMessage() {
 		str := fmt.Sprintf("too many input transactions to fit into "+
@@ -421,7 +423,7 @@ func (msg *MsgTx) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) error
 	}
 
 	// Prevent more output transactions than could possibly fit into a
-	// message.  It would be possible to cause memory exhaustion and panics
+	// message.  It would be possible to cause memory exhaustion and panic
 	// without a sane upper bound on this count.
 	if count > maxTxOutPerMessage() {
 		returnScriptBuffers()
@@ -457,11 +459,11 @@ func (msg *MsgTx) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) error
 		return err
 	}
 
-	// Create a single allocation to house all of the scripts and set each
+	// Create a single allocation to house all the scripts and set each
 	// input signature script and output public key script to the
 	// appropriate subslice of the overall contiguous buffer.  Then, return
-	// each individual script buffer back to the pool so they can be reused
-	// for future deserializations.  This is done because it significantly
+	// each script buffer to the pool so they can be reused
+	// for future deserialization.  This is done because it significantly
 	// reduces the number of allocations the garbage collector needs to
 	// track, which in turn improves performance and drastically reduces the
 	// amount of runtime overhead that would otherwise be needed to keep
@@ -533,7 +535,7 @@ func (msg *MsgTx) Deserialize(r io.Reader) error {
 // This is part of the Message interface implementation.
 // See Serialize for encoding transactions to be stored to disk, such as in a
 // database, as opposed to encoding transactions for the wire.
-func (msg *MsgTx) BsvEncode(w io.Writer, pver uint32, enc MessageEncoding) error {
+func (msg *MsgTx) BsvEncode(w io.Writer, pver uint32, _ MessageEncoding) error {
 	err := binarySerializer.PutUint32(w, littleEndian, uint32(msg.Version))
 	if err != nil {
 		return err
@@ -573,7 +575,7 @@ func (msg *MsgTx) BsvEncode(w io.Writer, pver uint32, enc MessageEncoding) error
 // Serialize encodes the transaction to w using a format that suitable for
 // long-term storage such as a database while respecting the Version field in
 // the transaction.  This function differs from BsvEncode in that BsvEncode
-// encodes the transaction to the bitcoin wire protocol in order to be sent
+// encodes the transaction to the bitcoin wire protocol to be sent
 // across the network.  The wire encoding can technically differ depending on
 // the protocol version and doesn't even really need to match the format of a
 // stored transaction at all.  As of the time this comment was written, the
@@ -590,7 +592,7 @@ func (msg *MsgTx) Serialize(w io.Writer) error {
 // baseSize returns the serialized size of the transaction without accounting
 // for any witness data.
 func (msg *MsgTx) baseSize() int {
-	// Version 4 bytes + LockTime 4 bytes + Serialized varint size for the
+	// Version 4 bytes + LockTime 4 bytes and Serialized varint size for the
 	// number of transaction inputs and outputs.
 	n := 8 + VarIntSerializeSize(uint64(len(msg.TxIn))) +
 		VarIntSerializeSize(uint64(len(msg.TxOut)))
@@ -607,7 +609,8 @@ func (msg *MsgTx) baseSize() int {
 }
 
 // SerializeSize returns the number of bytes it would take to serialize the
-// the transaction.
+//
+//	transaction.
 func (msg *MsgTx) SerializeSize() int {
 	return msg.baseSize()
 }
@@ -620,12 +623,12 @@ func (msg *MsgTx) Command() string {
 
 // MaxPayloadLength returns the maximum length the payload can be for the
 // receiver.  This is part of the Message interface implementation.
-func (msg *MsgTx) MaxPayloadLength(pver uint32) uint64 {
+func (msg *MsgTx) MaxPayloadLength(_ uint32) uint64 {
 	return MaxBlockPayload()
 }
 
 // PkScriptLocs returns a slice containing the start of each public key script
-// within the raw serialized transaction.  The caller can easily obtain the
+// within the raw-serialized transaction.  The caller can easily get the
 // length of each script by using len on the script available via the
 // appropriate transaction output entry.
 func (msg *MsgTx) PkScriptLocs() []int {
@@ -637,7 +640,7 @@ func (msg *MsgTx) PkScriptLocs() []int {
 	// The starting offset in the serialized transaction of the first
 	// transaction output is:
 	//
-	// Version 4 bytes + serialized varint size for the number of
+	// Version 4 bytes and serialized varint size for the number of
 	// transaction inputs and outputs + serialized size of each transaction
 	// input.
 	n := 4 + VarIntSerializeSize(uint64(len(msg.TxIn))) +
@@ -664,10 +667,10 @@ func (msg *MsgTx) PkScriptLocs() []int {
 }
 
 // NewMsgTx returns a new bitcoin tx message that conforms to the Message
-// interface.  The return instance has a default version of TxVersion and there
+// interface.  The return instance has a default version of TxVersion, and there
 // are no transaction inputs or outputs.  Also, the lock time is set to zero
 // to indicate the transaction is valid immediately as opposed to some time in
-// future.
+// the future.
 func NewMsgTx(version int32) *MsgTx {
 	return &MsgTx{
 		Version: version,
@@ -677,7 +680,7 @@ func NewMsgTx(version int32) *MsgTx {
 }
 
 // readOutPoint reads the next sequence of bytes from r as an OutPoint.
-func readOutPoint(r io.Reader, pver uint32, version int32, op *OutPoint) error {
+func readOutPoint(r io.Reader, _ uint32, _ int32, op *OutPoint) error {
 	_, err := io.ReadFull(r, op.Hash[:])
 	if err != nil {
 		return err
@@ -690,7 +693,7 @@ func readOutPoint(r io.Reader, pver uint32, version int32, op *OutPoint) error {
 
 // writeOutPoint encodes op to the bitcoin protocol encoding for an OutPoint
 // to w.
-func writeOutPoint(w io.Writer, pver uint32, version int32, op *OutPoint) error {
+func writeOutPoint(w io.Writer, _ uint32, _ int32, op *OutPoint) error {
 	_, err := w.Write(op.Hash[:])
 	if err != nil {
 		return err
@@ -712,8 +715,8 @@ func readScript(r io.Reader, pver uint32, maxAllowed uint64, fieldName string) (
 		return nil, err
 	}
 
-	// Prevent byte array larger than the max message size.  It would
-	// be possible to cause memory exhaustion and panics without a sane
+	// Prevent a byte array larger than the max message size.  It would
+	// be possible to cause memory exhaustion and panic without a sane
 	// upper bound on this count.
 	if count > maxAllowed {
 		str := fmt.Sprintf("%s is larger than the max allowed size "+
@@ -767,7 +770,7 @@ func writeTxIn(w io.Writer, pver uint32, version int32, ti *TxIn) error {
 
 // readTxOut reads the next sequence of bytes from r as a transaction output
 // (TxOut).
-func readTxOut(r io.Reader, pver uint32, version int32, to *TxOut) error {
+func readTxOut(r io.Reader, pver uint32, _ int32, to *TxOut) error {
 	err := readElement(r, &to.Value)
 	if err != nil {
 		return err
@@ -782,9 +785,9 @@ func readTxOut(r io.Reader, pver uint32, version int32, to *TxOut) error {
 // WriteTxOut encodes to into the bitcoin protocol encoding for a transaction
 // output (TxOut) to w.
 //
-// NOTE: This function is exported in order to allow txscript to compute the
+// NOTE: This function is exported to allow txscript to compute the
 // new sighashes for witness transactions (BIP0143).
-func WriteTxOut(w io.Writer, pver uint32, version int32, to *TxOut) error {
+func WriteTxOut(w io.Writer, pver uint32, _ int32, to *TxOut) error {
 	err := binarySerializer.PutUint64(w, littleEndian, uint64(to.Value))
 	if err != nil {
 		return err
