@@ -47,7 +47,8 @@
 		"gochecknoglobals",
 		"gocritic",
 		"godot",
-		"godox"
+		"godox",
+		"gomoddirectives"
 	],
     "enable": [
 		"asasalint",
@@ -62,7 +63,6 @@
 		"recvcheck",
 		"nilnil",
 		"nilnesserr",
-		"gomoddirectives",
 		"durationcheck",
 		"errchkjson",
 		"errname",

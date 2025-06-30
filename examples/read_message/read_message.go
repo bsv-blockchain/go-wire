@@ -1,3 +1,8 @@
+// Package main demonstrates how to read a bitcoin message from a
+// bytes.Reader using the go-wire package. It constructs a version message
+// and writes it to a bytes.Buffer, then reads it back using the
+// ReadMessage function. The example uses the main bitcoin network and
+// the most recent protocol version supported by the package.
 package main
 
 import (
