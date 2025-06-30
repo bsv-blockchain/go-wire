@@ -6,6 +6,7 @@ package wire
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"net"
 	"reflect"
@@ -54,7 +55,7 @@ func TestNetAddress(t *testing.T) {
 		t.Errorf("HasService: SFNodeNetwork service not set")
 	}
 
-	// Ensure max payload is expected value for latest protocol version.
+	// Ensure max payload is expected value for the latest protocol version.
 	pver := ProtocolVersion
 	wantPayload := uint64(30)
 	maxPayload := maxNetAddressPayload(ProtocolVersion)
@@ -179,7 +180,6 @@ func TestNetAddressWire(t *testing.T) {
 	t.Logf("Running %d tests", len(tests))
 
 	for i, test := range tests {
-		test := test
 		// Encode to wire format.
 		var buf bytes.Buffer
 
@@ -257,9 +257,9 @@ func TestNetAddressWireErrors(t *testing.T) {
 		// Force errors on port.
 		{&baseNetAddr, []byte{}, pver, false, 24, io.ErrShortWrite, io.EOF},
 
-		// Protocol version before NetAddressTimeVersion with timestamp
-		// flag set (should not have timestamp due to old protocol
-		// version) and  intentional read/write errors.
+		// Protocol version before NetAddressTimeVersion with a timestamp
+		// flag set (should not have a timestamp due to an old protocol
+		// version) and intentional read/write errors.
 		// Force errors on services.
 		{&baseNetAddr, []byte{}, pverNAT, true, 0, io.ErrShortWrite, io.EOF},
 		// Force errors on ip.
@@ -275,7 +275,7 @@ func TestNetAddressWireErrors(t *testing.T) {
 		w := newFixedWriter(test.max)
 
 		err := writeNetAddress(w, test.pver, test.in, test.ts)
-		if err != test.writeErr {
+		if !errors.Is(err, test.writeErr) {
 			t.Errorf("writeNetAddress #%d wrong error got: %v, want: %v",
 				i, err, test.writeErr)
 			continue
@@ -287,7 +287,7 @@ func TestNetAddressWireErrors(t *testing.T) {
 		r := newFixedReader(test.max, test.buf)
 
 		err = readNetAddress(r, test.pver, &na, test.ts)
-		if err != test.readErr {
+		if !errors.Is(err, test.readErr) {
 			t.Errorf("readNetAddress #%d wrong error got: %v, want: %v",
 				i, err, test.readErr)
 			continue

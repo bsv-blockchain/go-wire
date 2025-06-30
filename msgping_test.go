@@ -6,6 +6,7 @@ package wire
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"reflect"
 	"testing"
@@ -36,7 +37,7 @@ func TestPing(t *testing.T) {
 			cmd, wantCmd)
 	}
 
-	// Ensure max payload is expected value for latest protocol version.
+	// Ensure max payload is expected value for the latest protocol version.
 	wantPayload := uint64(8)
 	maxPayload := msg.MaxPayloadLength(pver)
 
@@ -65,7 +66,7 @@ func TestPingBIP0031(t *testing.T) {
 			msg.Nonce, nonce)
 	}
 
-	// Ensure max payload is expected value for old protocol version.
+	// Ensure max payload is expected value for an old protocol version.
 	wantPayload := uint64(0)
 	maxPayload := msg.MaxPayloadLength(pver)
 
@@ -75,7 +76,7 @@ func TestPingBIP0031(t *testing.T) {
 			maxPayload, wantPayload)
 	}
 
-	// Test encode with old protocol version.
+	// Test encode with an old protocol version.
 	var buf bytes.Buffer
 
 	err = msg.BsvEncode(&buf, pver, enc)
@@ -83,7 +84,7 @@ func TestPingBIP0031(t *testing.T) {
 		t.Errorf("encode of MsgPing failed %v err <%v>", msg, err)
 	}
 
-	// Test decode with old protocol version.
+	// Test decoding with an old protocol version.
 	readmsg := NewMsgPing(0)
 
 	err = readmsg.Bsvdecode(&buf, pver, enc)
@@ -112,7 +113,7 @@ func TestPingCrossProtocol(t *testing.T) {
 			msg.Nonce, nonce)
 	}
 
-	// Encode with latest protocol version.
+	// Encode with the latest protocol version.
 	var buf bytes.Buffer
 
 	err = msg.BsvEncode(&buf, ProtocolVersion, BaseEncoding)
@@ -120,7 +121,7 @@ func TestPingCrossProtocol(t *testing.T) {
 		t.Errorf("encode of MsgPing failed %v err <%v>", msg, err)
 	}
 
-	// Decode with old protocol version.
+	// Decode with an old protocol version.
 	readmsg := NewMsgPing(0)
 
 	err = readmsg.Bsvdecode(&buf, BIP0031Version, BaseEncoding)
@@ -243,7 +244,7 @@ func TestPingWireErrors(t *testing.T) {
 		w := newFixedWriter(test.max)
 
 		err := test.in.BsvEncode(w, test.pver, test.enc)
-		if err != test.writeErr {
+		if !errors.Is(err, test.writeErr) {
 			t.Errorf("BsvEncode #%d wrong error got: %v, want: %v",
 				i, err, test.writeErr)
 			continue
@@ -255,7 +256,7 @@ func TestPingWireErrors(t *testing.T) {
 		r := newFixedReader(test.max, test.buf)
 
 		err = msg.Bsvdecode(r, test.pver, test.enc)
-		if err != test.readErr {
+		if !errors.Is(err, test.readErr) {
 			t.Errorf("Bsvdecode #%d wrong error got: %v, want: %v",
 				i, err, test.readErr)
 			continue

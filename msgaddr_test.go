@@ -6,6 +6,7 @@ package wire
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"net"
 	"reflect"
@@ -28,7 +29,7 @@ func TestAddr(t *testing.T) {
 			cmd, wantCmd)
 	}
 
-	// Ensure max payload is expected value for latest protocol version.
+	// Ensure max payload is expected value for a latest protocol version.
 	// Num addresses (varInt) + max allowed addresses.
 	wantPayload := uint64(30009)
 	maxPayload := msg.MaxPayloadLength(pver)
@@ -282,7 +283,7 @@ func TestAddrWireErrors(t *testing.T) {
 		// Latest protocol version with intentional read/write errors.
 		// Force error in addresses count
 		{baseAddr, baseAddrEncoded, pver, BaseEncoding, 0, io.ErrShortWrite, io.EOF},
-		// Force error in address list.
+		// Force error in an address list.
 		{baseAddr, baseAddrEncoded, pver, BaseEncoding, 1, io.ErrShortWrite, io.EOF},
 		// Force error with greater than max inventory vectors.
 		{maxAddr, maxAddrEncoded, pver, BaseEncoding, 3, wireErr, wireErr},
@@ -306,8 +307,9 @@ func TestAddrWireErrors(t *testing.T) {
 
 		// For errors which are not of type MessageError, check them for
 		// equality.
-		if _, ok := err.(*MessageError); !ok {
-			if err != test.writeErr {
+		var msgError *MessageError
+		if !errors.As(err, &msgError) {
+			if !errors.Is(err, test.writeErr) {
 				t.Errorf("BsvEncode #%d wrong error got: %v, "+
 					"want: %v", i, err, test.writeErr)
 				continue
@@ -328,8 +330,8 @@ func TestAddrWireErrors(t *testing.T) {
 
 		// For errors which are not of type MessageError, check them for
 		// equality.
-		if _, ok := err.(*MessageError); !ok {
-			if err != test.readErr {
+		if !errors.As(err, &msgError) {
+			if !errors.Is(err, test.readErr) {
 				t.Errorf("Bsvdecode #%d wrong error got: %v, "+
 					"want: %v", i, err, test.readErr)
 				continue

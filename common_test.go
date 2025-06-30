@@ -240,7 +240,7 @@ func TestElementWireErrors(t *testing.T) {
 		w := newFixedWriter(test.max)
 		err := writeElement(w, test.in)
 
-		if err != test.writeErr {
+		if !errors.Is(err, test.writeErr) {
 			t.Errorf("writeElement #%d wrong error got: %v, want: %v",
 				i, err, test.writeErr)
 			continue
@@ -255,7 +255,7 @@ func TestElementWireErrors(t *testing.T) {
 		}
 
 		err = readElement(r, val)
-		if err != test.readErr {
+		if !errors.Is(err, test.readErr) {
 			t.Errorf("readElement #%d wrong error got: %v, want: %v",
 				i, err, test.readErr)
 			continue

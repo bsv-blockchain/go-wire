@@ -173,7 +173,7 @@ func (msg *MsgExtendedTx) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding)
 	}
 
 	if count != 0 || !bytes.Equal(efHeader, []byte{0x00, 0x00, 0x00, 0x00, 0xEF}) {
-		return fmt.Errorf("invalid extended tx EF header")
+		return fmt.Errorf("invalid extended tx EF header") //nolint:err113 // needs refactoring
 	}
 
 	count, err = ReadVarInt(r, pver)

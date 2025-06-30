@@ -78,6 +78,7 @@ func (msg *MsgVersion) AddService(service ServiceFlag) {
 func (msg *MsgVersion) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding) error {
 	buf, ok := r.(*bytes.Buffer)
 	if !ok {
+		//nolint:err113 // needs refactoring
 		return fmt.Errorf("MsgVersion.Bsvdecode reader is not a " +
 			"*bytes.Buffer")
 	}
