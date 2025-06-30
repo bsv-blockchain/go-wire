@@ -22,7 +22,7 @@ const MaxExtMsgPayload = 0xFFFFFFFFFFFFFFFF
 
 // Bsvdecode decodes r using the bitcoin protocol encoding into the receiver.
 // This is part of the Message interface implementation.
-func (msg *MsgExtMsg) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) error {
+func (msg *MsgExtMsg) Bsvdecode(_ io.Reader, pver uint32, _ MessageEncoding) error {
 	if pver < ProtoconfVersion {
 		str := fmt.Sprintf("protoconf message invalid for protocol "+
 			"version %d", pver)
@@ -34,7 +34,7 @@ func (msg *MsgExtMsg) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) e
 
 // BsvEncode encodes the receiver to w using the bitcoin protocol encoding.
 // This is part of the Message interface implementation.
-func (msg *MsgExtMsg) BsvEncode(w io.Writer, pver uint32, enc MessageEncoding) error {
+func (msg *MsgExtMsg) BsvEncode(w io.Writer, pver uint32, _ MessageEncoding) error {
 	if pver < ProtoconfVersion {
 		str := fmt.Sprintf("protoconf message invalid for protocol "+
 			"version %d", pver)
@@ -52,7 +52,7 @@ func (msg *MsgExtMsg) Command() string {
 
 // MaxPayloadLength returns the maximum length the payload can be for the
 // receiver.  This is part of the Message interface implementation.
-func (msg *MsgExtMsg) MaxPayloadLength(pver uint32) uint64 {
+func (msg *MsgExtMsg) MaxPayloadLength(_ uint32) uint64 {
 	return MaxProtoconfPayload
 }
 

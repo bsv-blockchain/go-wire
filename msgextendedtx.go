@@ -33,7 +33,7 @@ func (t *ExtendedTxIn) SerializeSize() int {
 }
 
 // NewExtendedTxIn returns a new bitcoin transaction input with the provided
-// previous outpoint point and signature script with a default sequence of
+// previous output point and signature script with a default sequence of
 // MaxTxInSequenceNum.
 func NewExtendedTxIn(prevOut *OutPoint, signatureScript []byte, previousTxSatoshis uint64, previousTxScript []byte) *ExtendedTxIn {
 	return &ExtendedTxIn{
@@ -151,7 +151,7 @@ func (msg *MsgExtendedTx) Copy() *MsgTx {
 // This is part of the Message interface implementation.
 // See Deserialize for decoding transactions stored to disk, such as in a
 // database, as opposed to decoding transactions from the wire.
-func (msg *MsgExtendedTx) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) error {
+func (msg *MsgExtendedTx) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding) error {
 	version, err := binarySerializer.Uint32(r, littleEndian)
 	if err != nil {
 		return err
@@ -182,7 +182,7 @@ func (msg *MsgExtendedTx) Bsvdecode(r io.Reader, pver uint32, enc MessageEncodin
 	}
 
 	// Prevent more input transactions than could possibly fit into a
-	// message.  It would be possible to cause memory exhaustion and panics
+	// message.  It would be possible to cause memory exhaustion and panic
 	// without a sane upper bound on this count.
 	if count > maxTxInPerMessage() {
 		str := fmt.Sprintf("too many input transactions to fit into "+
@@ -243,7 +243,7 @@ func (msg *MsgExtendedTx) Bsvdecode(r io.Reader, pver uint32, enc MessageEncodin
 	}
 
 	// Prevent more output transactions than could possibly fit into a
-	// message.  It would be possible to cause memory exhaustion and panics
+	// message.  It would be possible to cause memory exhaustion and panic
 	// without a sane upper bound on this count.
 	if count > maxTxOutPerMessage() {
 		returnScriptBuffers()
@@ -279,11 +279,11 @@ func (msg *MsgExtendedTx) Bsvdecode(r io.Reader, pver uint32, enc MessageEncodin
 		return err
 	}
 
-	// Create a single allocation to house all of the scripts and set each
+	// Create a single allocation to house all the scripts and set each
 	// input signature script and output public key script to the
 	// appropriate subslice of the overall contiguous buffer.  Then, return
-	// each individual script buffer back to the pool so they can be reused
-	// for future deserializations.  This is done because it significantly
+	// each script buffer to the pool so they can be reused
+	// for future deserialization.  This is done because it significantly
 	// reduces the number of allocations the garbage collector needs to
 	// track, which in turn improves performance and drastically reduces the
 	// amount of runtime overhead that would otherwise be needed to keep
@@ -355,7 +355,7 @@ func (msg *MsgExtendedTx) Deserialize(r io.Reader) error {
 // This is part of the Message interface implementation.
 // See Serialize for encoding transactions to be stored to disk, such as in a
 // database, as opposed to encoding transactions for the wire.
-func (msg *MsgExtendedTx) BsvEncode(w io.Writer, pver uint32, enc MessageEncoding) error {
+func (msg *MsgExtendedTx) BsvEncode(w io.Writer, pver uint32, _ MessageEncoding) error {
 	err := binarySerializer.PutUint32(w, littleEndian, uint32(msg.Version))
 	if err != nil {
 		return err
@@ -401,7 +401,7 @@ func (msg *MsgExtendedTx) BsvEncode(w io.Writer, pver uint32, enc MessageEncodin
 // Serialize encodes the transaction to w using a format that suitable for
 // long-term storage such as a database while respecting the Version field in
 // the transaction.  This function differs from BsvEncode in that BsvEncode
-// encodes the transaction to the bitcoin wire protocol in order to be sent
+// encodes the transaction to the bitcoin wire protocol to be sent
 // across the network.  The wire encoding can technically differ depending on
 // the protocol version and doesn't even really need to match the format of a
 // stored transaction at all.  As of the time this comment was written, the
@@ -418,7 +418,7 @@ func (msg *MsgExtendedTx) Serialize(w io.Writer) error {
 // baseSize returns the serialized size of the transaction without accounting
 // for any witness data.
 func (msg *MsgExtendedTx) baseSize() int {
-	// Version 4 bytes + LockTime 4 bytes + Serialized varint size for the
+	// Version 4 bytes + LockTime 4 bytes and Serialized varint size for the
 	// number of transaction inputs and outputs.
 	n := 8 + VarIntSerializeSize(uint64(len(msg.TxIn))) +
 		VarIntSerializeSize(uint64(len(msg.TxOut)))
@@ -435,7 +435,8 @@ func (msg *MsgExtendedTx) baseSize() int {
 }
 
 // SerializeSize returns the number of bytes it would take to serialize the
-// the transaction.
+//
+//	transaction.
 func (msg *MsgExtendedTx) SerializeSize() int {
 	return msg.baseSize()
 }
@@ -448,12 +449,12 @@ func (msg *MsgExtendedTx) Command() string {
 
 // MaxPayloadLength returns the maximum length the payload can be for the
 // receiver.  This is part of the Message interface implementation.
-func (msg *MsgExtendedTx) MaxPayloadLength(pver uint32) uint64 {
+func (msg *MsgExtendedTx) MaxPayloadLength(_ uint32) uint64 {
 	return MaxBlockPayload()
 }
 
 // PkScriptLocs returns a slice containing the start of each public key script
-// within the raw serialized transaction.  The caller can easily obtain the
+// within the raw-serialized transaction.  The caller can easily get the
 // length of each script by using len on the script available via the
 // appropriate transaction output entry.
 func (msg *MsgExtendedTx) PkScriptLocs() []int {
@@ -465,7 +466,7 @@ func (msg *MsgExtendedTx) PkScriptLocs() []int {
 	// The starting offset in the serialized transaction of the first
 	// transaction output is:
 	//
-	// Version 4 bytes + serialized varint size for the number of
+	// Version 4 bytes and serialized varint size for the number of
 	// transaction inputs and outputs + serialized size of each transaction
 	// input.
 	n := 4 + VarIntSerializeSize(uint64(len(msg.TxIn))) +
@@ -492,10 +493,10 @@ func (msg *MsgExtendedTx) PkScriptLocs() []int {
 }
 
 // NewMsgExtendedTx returns a new extended bitcoin tx message that conforms to the Message
-// interface.  The return instance has a default version of TxVersion and there
+// interface.  The return instance has a default version of TxVersion, and there
 // are no transaction inputs or outputs.  Also, the lock time is set to zero
 // to indicate the transaction is valid immediately as opposed to some time in
-// future.
+// the future.
 func NewMsgExtendedTx(version int32) *MsgExtendedTx {
 	return &MsgExtendedTx{
 		Version: version,
