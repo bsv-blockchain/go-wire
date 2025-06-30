@@ -105,10 +105,10 @@ var LatestEncoding = BaseEncoding
 // and may therefore contain additional or fewer fields than those which
 // are used directly in the protocol encoded message.
 type Message interface {
-	Bsvdecode(io.Reader, uint32, MessageEncoding) error
-	BsvEncode(io.Writer, uint32, MessageEncoding) error
+	Bsvdecode(r io.Reader, val uint32, enc MessageEncoding) error
+	BsvEncode(w io.Writer, val uint32, enc MessageEncoding) error
 	Command() string
-	MaxPayloadLength(uint32) uint64
+	MaxPayloadLength(val uint32) uint64
 }
 
 // makeEmptyMessage creates a message of the appropriate concrete type based

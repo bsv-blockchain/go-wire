@@ -358,7 +358,7 @@ func TestMerkleBlockOverflowErrors(t *testing.T) {
 	// allowed tx hashes.
 	var buf bytes.Buffer
 
-	err := WriteVarInt(&buf, pver, uint64(maxTxPerBlock())+1)
+	err := WriteVarInt(&buf, pver, maxTxPerBlock()+1)
 	require.NoError(t, err)
 
 	numHashesOffset := 84
@@ -368,7 +368,7 @@ func TestMerkleBlockOverflowErrors(t *testing.T) {
 	// Create bytes for a merkle block that claims to have more than the max
 	// allowed flag bytes.
 	buf.Reset()
-	err = WriteVarInt(&buf, pver, uint64(maxFlagsPerMerkleBlock())+1)
+	err = WriteVarInt(&buf, pver, maxFlagsPerMerkleBlock()+1)
 	require.NoError(t, err)
 
 	numFlagBytesOffset := 117
