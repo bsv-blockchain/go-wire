@@ -109,7 +109,7 @@ go get -u github.com/bsv-blockchain/go-wire
 - **API Reference** – Dive into the godocs at [pkg.go.dev/github.com/bsv-blockchain/go-wire](https://pkg.go.dev/github.com/bsv-blockchain/go-wire)
 - **Usage Examples** – Browse practical patterns either the [examples directory](examples) or view the example functions
 - **Benchmarks** – Check the latest numbers in the [benchmark results](#benchmark-results)
-- **Test Suite** – Review both the [unit tests](wire_test.go) and [fuzz tests](wire_fuzz_test.go) (powered by [`testify`](https://github.com/stretchr/testify))
+- **Test Suite** – Review both the [unit tests](common_test.go) and [fuzz tests](wire_fuzz_test.go) (powered by [`testify`](https://github.com/stretchr/testify))
 
 <br/>
 
@@ -144,67 +144,6 @@ go get -u github.com/bsv-blockchain/go-wire
 </details>
 
 <details>
-<summary><strong><code>Repository File Glossary</code></strong></summary>
-<br/>
-
-This glossary describes each tracked file in the repository and notes if it is required for GitHub or another external service.
-
-| File Path                                                                                      | Description                                     | Service          |
-|------------------------------------------------------------------------------------------------|-------------------------------------------------|------------------|
-| [.cursorrules](.cursorrules)                                                                   | Rules for Cursor AI integrations                | Cursor           |
-| [.devcontainer/devcontainer.json](.devcontainer/devcontainer.json)                             | VS Code dev or GitHub container configuration   | VS Code & GitHub |
-| [.dockerignore](.dockerignore)                                                                 | Paths ignored by Docker builds                  | Docker           |
-| [.editorconfig](.editorconfig)                                                                 | Editor configuration defaults                   | Editor           |
-| [.gitattributes](.gitattributes)                                                               | Git attributes and export settings              | Git              |
-| [.github/AGENTS.md](.github/AGENTS.md)                                                         | Contribution rules and guidelines               | GitHub           |
-| [.github/CLAUDE.md](.github/CLAUDE.md)                                                         | Claude agent instructions                       | Claude           |
-| [.github/CODEOWNERS](.github/CODEOWNERS)                                                       | Code ownership declarations for GitHub          | GitHub           |
-| [.github/CODE_OF_CONDUCT.md](.github/CODE_OF_CONDUCT.md)                                       | Community behavior standards                    | GitHub           |
-| [.github/CODE_STANDARDS.md](.github/CODE_STANDARDS.md)                                         | Coding style guide                              | GitHub           |
-| [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md)                                             | How to contribute to the project                | GitHub           |
-| [.github/FUNDING.yml](.github/FUNDING.yml)                                                     | Funding links displayed by GitHub               | GitHub           |
-| [.github/ISSUE_TEMPLATE/bug_report.yml](.github/ISSUE_TEMPLATE/bug_report.yml)                 | Issue template for bug reports                  | GitHub           |
-| [.github/ISSUE_TEMPLATE/feature_request.yml](.github/ISSUE_TEMPLATE/feature_request.yml)       | Issue template for feature requests             | GitHub           |
-| [.github/ISSUE_TEMPLATE/question.yml](.github/ISSUE_TEMPLATE/question.yml)                     | Issue template for questions                    | GitHub           |
-| [.github/SECURITY.md](.github/SECURITY.md)                                                     | Security policy                                 | GitHub           |
-| [.github/SUPPORT.md](.github/SUPPORT.md)                                                       | Support guidelines                              | GitHub           |
-| [.github/dependabot.yml](.github/dependabot.yml)                                               | Dependabot configuration                        | GitHub           |
-| [.github/labels.yml](.github/labels.yml)                                                       | Repository label definitions                    | GitHub           |
-| [.github/pull_request_template.md](.github/pull_request_template.md)                           | Pull request description template               | GitHub           |
-| [.github/sweep.yaml](.github/sweep.yaml)                                                       | Sweep AI configuration                          | Sweep AI         |
-| [.github/workflows/auto-merge-on-approval.yml](.github/workflows/auto-merge-on-approval.yml)   | Workflow for automatic merges                   | GitHub Actions   |
-| [.github/workflows/check-for-leaks.yml](.github/workflows/check-for-leaks.yml)                 | Secret leak detection workflow                  | GitHub Actions   |
-| [.github/workflows/clean-runner-cache.yml](.github/workflows/clean-runner-cache.yml)           | Cleanup for GitHub runners                      | GitHub Actions   |
-| [.github/workflows/codeql-analysis.yml](.github/workflows/codeql-analysis.yml)                 | CodeQL security analysis workflow               | GitHub Actions   |
-| [.github/workflows/delete-merged-branches.yml](.github/workflows/delete-merged-branches.yml)   | Auto delete merged branches                     | GitHub Actions   |
-| [.github/workflows/dependabot-auto-merge.yml](.github/workflows/dependabot-auto-merge.yml)     | Auto merge Dependabot PRs                       | GitHub Actions   |
-| [.github/workflows/pull-request-management.yml](.github/workflows/pull-request-management.yml) | Pull request triage workflow                    | GitHub Actions   |
-| [.github/workflows/release.yml](.github/workflows/release.yml)                                 | Release workflow using GoReleaser               | GitHub Actions   |
-| [.github/workflows/run-tests.yml](.github/workflows/run-tests.yml)                             | CI test workflow                                | GitHub Actions   |
-| [.github/workflows/scorecard.yml](.github/workflows/scorecard.yml)                             | OpenSSF Scorecard workflow                      | GitHub Actions   |
-| [.github/workflows/stale.yml](.github/workflows/stale.yml)                                     | Close stale issues and PRs                      | GitHub Actions   |
-| [.github/workflows/sync-labels.yml](.github/workflows/sync-labels.yml)                         | Sync repository labels                          | GitHub Actions   |
-| [.gitignore](.gitignore)                                                                       | Files and directories Git should ignore         | Git              |
-| [.gitpod.yml](.gitpod.yml)                                                                     | Gitpod workspace configuration                  | Gitpod           |
-| [.golangci.json](.golangci.json)                                                               | GolangCI-Lint configuration                     | GolangCI-Lint    |
-| [.goreleaser.yml](.goreleaser.yml)                                                             | GoReleaser configuration for release automation | GoReleaser       |
-| [.make/common.mk](.make/common.mk)                                                             | Shared make tasks                               | Make             |
-| [.make/go.mk](.make/go.mk)                                                                     | Go-specific make tasks                          | Make             |
-| [.pre-commit-config.yaml](.pre-commit-config.yaml)                                             | Pre-commit hooks configuration                  | Pre-commit       |
-| [.vscode/extensions.json](.vscode/extensions.json)                                             | Recommended VS Code extensions                  | VS Code          |
-| [.vscode/launch.json](.vscode/launch.json)                                                     | VS Code debugging configuration                 | VS Code          |
-| [.vscode/settings.json](.vscode/settings.json)                                                 | VS Code workspace settings                      | VS Code          |
-| [.vscode/tasks.json](.vscode/tasks.json)                                                       | VS Code tasks configuration                     | VS Code          |
-| [CITATION.cff](CITATION.cff)                                                                   | Citation metadata recognized by GitHub          | GitHub           |
-| [LICENSE](LICENSE)                                                                             | Project license                                 | Yours!           |
-| [Makefile](Makefile)                                                                           | Build and lint automation                       | Make             |
-| [README.md](README.md)                                                                         | Project overview and usage                      | Yours!           |
-| [codecov.yml](codecov.yml)                                                                     | Codecov upload configuration                    | Codecov          |
-| [go.mod](go.mod)                                                                               | Go module definition                            | Go               |
-| [go.sum](go.sum)                                                                               | Dependency checksums generated by Go            | Go               |
-</details>
-
-<details>
 <summary><strong><code>Library Deployment</code></strong></summary>
 <br/>
 
@@ -220,12 +159,6 @@ To generate a snapshot (non-versioned) release for testing purposes, run:
 
 ```bash
 make release-snap
-```
-
-Before tagging a new version, update the release metadata in the `CITATION.cff` file:
-
-```bash
-make citation version=0.2.1
 ```
 
 Then create and push a new Git tag using:
@@ -366,9 +299,40 @@ make bench
 
 ### Benchmark Results
 
-| Benchmark                          | Iterations | ns/op | B/op | allocs/op |
-|------------------------------------|------------|------:|-----:|----------:|
-| [Function](wire_benchmark_test.go) | 21,179,739 | 56.59 |   40 |         2 |
+| Benchmark          | Iterations |      ns/op |    B/op | allocs/op |
+|--------------------|-----------:|-----------:|--------:|----------:|
+| WriteVarInt1       | 41,781,031 |      28.41 |       0 |         0 |
+| WriteVarInt3       | 20,781,544 |      57.76 |       0 |         0 |
+| WriteVarInt5       | 20,617,789 |      57.24 |       0 |         0 |
+| WriteVarInt9       | 20,931,920 |      57.08 |       0 |         0 |
+| ReadVarInt1        | 34,902,406 |      34.07 |       0 |         0 |
+| ReadVarInt3        | 17,399,089 |      68.77 |       0 |         0 |
+| ReadVarInt5        | 17,409,764 |      68.85 |       0 |         0 |
+| ReadVarInt9        | 17,447,112 |      68.61 |       0 |         0 |
+| ReadVarStr4        | 19,051,372 |      61.96 |       8 |         2 |
+| ReadVarStr10       | 17,857,441 |      67.16 |      32 |         2 |
+| WriteVarStr4       | 27,119,715 |      44.39 |       8 |         1 |
+| WriteVarStr10      | 24,815,733 |      48.25 |      16 |         1 |
+| ReadOutPoint       | 27,905,300 |      43.20 |       0 |         0 |
+| WriteOutPoint      | 39,446,542 |      30.22 |       0 |         0 |
+| ReadTxOut          | 11,168,122 |     108.90 |       0 |         0 |
+| WriteTxOut         | 19,734,460 |      59.72 |       0 |         0 |
+| ReadTxIn           |  8,139,504 |     146.70 |       0 |         0 |
+| WriteTxIn          | 12,748,219 |      91.01 |       0 |         0 |
+| DeserializeTxSmall |  2,328,372 |     514.80 |     208 |         5 |
+| SerializeTx        |  4,559,265 |     262.10 |       0 |         0 |
+| ReadBlockHeader    |  7,482,752 |     161.00 |       0 |         0 |
+| WriteBlockHeader   |  7,447,129 |     162.10 |      12 |         3 |
+| DecodeGetHeaders   |    198,272 |    6151.00 |   20480 |         2 |
+| DecodeHeaders      |      2,694 |  433745.00 |  229380 |         2 |
+| DecodeGetBlocks    |    201,636 |    6314.00 |   20480 |         2 |
+| DecodeAddr         |      7,966 |  147317.00 |   89729 |      1002 |
+| DecodeInv          |        452 | 2645229.00 | 2203664 |         2 |
+| DecodeNotFound     |        379 | 3141447.00 | 2203663 |         2 |
+| DecodeMerkleBlock  |    501,637 |    2257.00 |    4368 |         3 |
+| TxHash             |  2,055,020 |     574.40 |     256 |         2 |
+| DoubleHashB        |  6,299,563 |     190.20 |      32 |         1 |
+| DoubleHash         |  6,618,770 |     183.80 |       0 |         0 |
 
 > These benchmarks reflect fast, allocation-free lookups for most retrieval functions, ensuring optimal performance in production environments.
 > Performance benchmarks for the core functions in this library, executed on an Apple M1 Max (ARM64).
