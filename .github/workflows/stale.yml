@@ -6,7 +6,7 @@
 #
 #  Triggers  : Scheduled (Mon-Fri at 08:32 UTC) and manual dispatch.
 #
-#  Maintainer: @bsv-blockchain
+#  Maintainer: @icellan
 # ------------------------------------------------------------------------------------
 
 name: stale-check

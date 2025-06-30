@@ -394,8 +394,8 @@ Edit `AGENTS.md` first when adjusting these policies, and keep the other files i
 
 ## 👥 Maintainers
 | [<img src="https://github.com/bsv-blockchain.png" height="50" alt="Siggi Oskarsson" />](https://github.com/icellan) |
-|:------------------------------------------------------------------------------------------------:|
-|                                [Siggi](https://github.com/icellan)                                 |
+|:-------------------------------------------------------------------------------------------------------------------:|
+|                                         [Siggi](https://github.com/icellan)                                         |
 
 <br/>
 
