@@ -6,6 +6,7 @@ package wire
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"reflect"
 	"testing"
@@ -27,7 +28,7 @@ func TestFilterAddLatest(t *testing.T) {
 			cmd, wantCmd)
 	}
 
-	// Ensure max payload is expected value for latest protocol version.
+	// Ensure max payload is expected value for a latest protocol version.
 	wantPayload := uint64(523)
 	maxPayload := msg.MaxPayloadLength(pver)
 
@@ -64,7 +65,7 @@ func TestFilterAddCrossProtocol(t *testing.T) {
 		t.Errorf("should get same data back out")
 	}
 
-	// Encode with latest protocol version.
+	// Encode with a latest protocol version.
 	var buf bytes.Buffer
 
 	err := msg.BsvEncode(&buf, ProtocolVersion, LatestEncoding)
@@ -72,7 +73,7 @@ func TestFilterAddCrossProtocol(t *testing.T) {
 		t.Errorf("encode of MsgFilterAdd failed %v err <%v>", msg, err)
 	}
 
-	// Decode with old protocol version.
+	// Decode with an old protocol version.
 	var readmsg MsgFilterAdd
 
 	err = readmsg.Bsvdecode(&buf, BIP0031Version, LatestEncoding)
@@ -93,7 +94,7 @@ func TestFilterAddMaxDataSize(t *testing.T) {
 	data := bytes.Repeat([]byte{0xff}, 521)
 	msg := NewMsgFilterAdd(data)
 
-	// Encode with latest protocol version.
+	// Encode with a latest protocol version.
 	var buf bytes.Buffer
 
 	err := msg.BsvEncode(&buf, ProtocolVersion, LatestEncoding)
@@ -102,7 +103,7 @@ func TestFilterAddMaxDataSize(t *testing.T) {
 			"have %v", msg)
 	}
 
-	// Decode with latest protocol version.
+	// Decode with a latest protocol version.
 	readbuf := bytes.NewReader(data)
 
 	err = msg.Bsvdecode(readbuf, ProtocolVersion, LatestEncoding)
@@ -165,8 +166,9 @@ func TestFilterAddWireErrors(t *testing.T) {
 
 		// For errors which are not of type MessageError, check them for
 		// equality.
-		if _, ok := err.(*MessageError); !ok {
-			if err != test.writeErr {
+		var msgError *MessageError
+		if !errors.As(err, &msgError) {
+			if !errors.Is(err, test.writeErr) {
 				t.Errorf("BsvEncode #%d wrong error got: %v, "+
 					"want: %v", i, err, test.writeErr)
 				continue
@@ -187,8 +189,8 @@ func TestFilterAddWireErrors(t *testing.T) {
 
 		// For errors which are not of type MessageError, check them for
 		// equality.
-		if _, ok := err.(*MessageError); !ok {
-			if err != test.readErr {
+		if !errors.As(err, &msgError) {
+			if !errors.Is(err, test.readErr) {
 				t.Errorf("Bsvdecode #%d wrong error got: %v, "+
 					"want: %v", i, err, test.readErr)
 				continue

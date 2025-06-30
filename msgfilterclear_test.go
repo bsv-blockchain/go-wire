@@ -6,6 +6,7 @@ package wire
 
 import (
 	"bytes"
+	"errors"
 	"reflect"
 	"testing"
 
@@ -25,7 +26,7 @@ func TestFilterClearLatest(t *testing.T) {
 			cmd, wantCmd)
 	}
 
-	// Ensure max payload is expected value for latest protocol version.
+	// Ensure max payload is expected value for the latest protocol version.
 	wantPayload := uint64(0)
 	maxPayload := msg.MaxPayloadLength(pver)
 
@@ -41,7 +42,7 @@ func TestFilterClearLatest(t *testing.T) {
 func TestFilterClearCrossProtocol(t *testing.T) {
 	msg := NewMsgFilterClear()
 
-	// Encode with latest protocol version.
+	// Encode with the latest protocol version.
 	var buf bytes.Buffer
 
 	err := msg.BsvEncode(&buf, ProtocolVersion, LatestEncoding)
@@ -49,7 +50,7 @@ func TestFilterClearCrossProtocol(t *testing.T) {
 		t.Errorf("encode of MsgFilterClear failed %v err <%v>", msg, err)
 	}
 
-	// Decode with old protocol version.
+	// Decode with an old protocol version.
 	var readmsg MsgFilterClear
 
 	err = readmsg.Bsvdecode(&buf, BIP0031Version, LatestEncoding)
@@ -63,7 +64,7 @@ func TestFilterClearCrossProtocol(t *testing.T) {
 // various protocol versions.
 func TestFilterClearWire(t *testing.T) {
 	msgFilterClear := NewMsgFilterClear()
-	msgFilterClearEncoded := []byte{}
+	var msgFilterClearEncoded []byte
 
 	tests := []struct {
 		in   *MsgFilterClear // Message to encode
@@ -144,7 +145,7 @@ func TestFilterClearWireErrors(t *testing.T) {
 	wireErr := &MessageError{}
 
 	baseFilterClear := NewMsgFilterClear()
-	baseFilterClearEncoded := []byte{}
+	var baseFilterClearEncoded []byte
 
 	tests := []struct {
 		in       *MsgFilterClear // Value to encode
@@ -177,8 +178,9 @@ func TestFilterClearWireErrors(t *testing.T) {
 
 		// For errors which are not of type MessageError, check them for
 		// equality.
-		if _, ok := err.(*MessageError); !ok {
-			if err != test.writeErr {
+		var msgError *MessageError
+		if !errors.As(err, &msgError) {
+			if !errors.Is(err, test.writeErr) {
 				t.Errorf("BsvEncode #%d wrong error got: %v, "+
 					"want: %v", i, err, test.writeErr)
 				continue
@@ -199,8 +201,8 @@ func TestFilterClearWireErrors(t *testing.T) {
 
 		// For errors which are not of type MessageError, check them for
 		// equality.
-		if _, ok := err.(*MessageError); !ok {
-			if err != test.readErr {
+		if !errors.As(err, &msgError) {
+			if !errors.Is(err, test.readErr) {
 				t.Errorf("Bsvdecode #%d wrong error got: %v, "+
 					"want: %v", i, err, test.readErr)
 				continue

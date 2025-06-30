@@ -6,12 +6,14 @@ package wire
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"reflect"
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/libsv/go-bt/v2/chainhash"
+	"github.com/stretchr/testify/require"
 )
 
 // TestGetBlocks tests the MsgGetBlocks API.
@@ -48,9 +50,9 @@ func TestGetBlocks(t *testing.T) {
 			cmd, wantCmd)
 	}
 
-	// Ensure max payload is expected value for latest protocol version.
+	// Ensure max payload is expected value for the latest protocol version.
 	// Protocol version 4 bytes + num hashes (varInt) + max block locator
-	// hashes + hash stop.
+	// hashes and hash stop.
 	wantPayload := uint64(16045)
 	maxPayload := msg.MaxPayloadLength(pver)
 
@@ -129,8 +131,12 @@ func TestGetBlocksWire(t *testing.T) {
 
 	// MsgGetBlocks message with multiple block locators and a stop hash.
 	multiLocators := NewMsgGetBlocks(hashStop)
-	multiLocators.AddBlockLocatorHash(hashLocator2)
-	multiLocators.AddBlockLocatorHash(hashLocator)
+	err = multiLocators.AddBlockLocatorHash(hashLocator2)
+	require.NoError(t, err)
+
+	err = multiLocators.AddBlockLocatorHash(hashLocator)
+	require.NoError(t, err)
+
 	multiLocators.ProtocolVersion = pver
 	multiLocatorsEncoded := []byte{
 		0x62, 0xea, 0x00, 0x00, // Protocol version 60002
@@ -201,7 +207,7 @@ func TestGetBlocksWire(t *testing.T) {
 			BaseEncoding,
 		},
 
-		// Protocol version BIP0031Versionwith multiple block locators.
+		// Protocol version BIP0031 Version with multiple block locators.
 		{
 			multiLocators,
 			multiLocators,
@@ -320,8 +326,11 @@ func TestGetBlocksWireErrors(t *testing.T) {
 	// MsgGetBlocks message with multiple block locators and a stop hash.
 	baseGetBlocks := NewMsgGetBlocks(hashStop)
 	baseGetBlocks.ProtocolVersion = pver
-	baseGetBlocks.AddBlockLocatorHash(hashLocator2)
-	baseGetBlocks.AddBlockLocatorHash(hashLocator)
+	err = baseGetBlocks.AddBlockLocatorHash(hashLocator2)
+	require.NoError(t, err)
+
+	err = baseGetBlocks.AddBlockLocatorHash(hashLocator)
+	require.NoError(t, err)
 
 	baseGetBlocksEncoded := []byte{
 		0x62, 0xea, 0x00, 0x00, // Protocol version 60002
@@ -344,7 +353,8 @@ func TestGetBlocksWireErrors(t *testing.T) {
 	// block locator hashes.
 	maxGetBlocks := NewMsgGetBlocks(hashStop)
 	for i := 0; i < MaxBlockLocatorsPerMsg; i++ {
-		maxGetBlocks.AddBlockLocatorHash(&mainNetGenesisHash)
+		err = maxGetBlocks.AddBlockLocatorHash(&mainNetGenesisHash)
+		require.NoError(t, err)
 	}
 
 	maxGetBlocks.BlockLocatorHashes = append(maxGetBlocks.BlockLocatorHashes,
@@ -381,7 +391,7 @@ func TestGetBlocksWireErrors(t *testing.T) {
 		// Encode to wire format.
 		w := newFixedWriter(test.max)
 
-		err := test.in.BsvEncode(w, test.pver, test.enc)
+		err = test.in.BsvEncode(w, test.pver, test.enc)
 		if reflect.TypeOf(err) != reflect.TypeOf(test.writeErr) {
 			t.Errorf("BsvEncode #%d wrong error got: %v, want: %v",
 				i, err, test.writeErr)
@@ -390,8 +400,9 @@ func TestGetBlocksWireErrors(t *testing.T) {
 
 		// For errors which are not of type MessageError, check them for
 		// equality.
-		if _, ok := err.(*MessageError); !ok {
-			if err != test.writeErr {
+		var msgError *MessageError
+		if !errors.As(err, &msgError) {
+			if !errors.Is(err, test.writeErr) {
 				t.Errorf("BsvEncode #%d wrong error got: %v, "+
 					"want: %v", i, err, test.writeErr)
 				continue
@@ -412,8 +423,8 @@ func TestGetBlocksWireErrors(t *testing.T) {
 
 		// For errors which are not of type MessageError, check them for
 		// equality.
-		if _, ok := err.(*MessageError); !ok {
-			if err != test.readErr {
+		if !errors.As(err, &msgError) {
+			if !errors.Is(test.readErr, err) {
 				t.Errorf("Bsvdecode #%d wrong error got: %v, "+
 					"want: %v", i, err, test.readErr)
 				continue
