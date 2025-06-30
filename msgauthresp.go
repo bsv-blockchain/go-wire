@@ -9,9 +9,9 @@ import (
 )
 
 var (
-	SECP256K1_COMP_PUB_KEY_SIZE_IN_BYTES = 0x21
-	SECP256K1_DER_SIGN_MIN_SIZE_IN_BYTES = 0x46
-	SECP256K1_DER_SIGN_MAX_SIZE_IN_BYTES = 0x48
+	SECP256K1_COMP_PUB_KEY_SIZE_IN_BYTES = 0x21 //nolint:revive // this is already being used in the code
+	SECP256K1_DER_SIGN_MIN_SIZE_IN_BYTES = 0x46 //nolint:revive // this is already being used in the code
+	SECP256K1_DER_SIGN_MAX_SIZE_IN_BYTES = 0x48 //nolint:revive // this is already being used in the code
 )
 
 // MsgAuthresp authentication response message
@@ -25,7 +25,7 @@ type MsgAuthresp struct {
 
 // Bsvdecode decodes r using the bitcoin protocol encoding into the receiver.
 // This is part of the Message interface implementation.
-func (msg *MsgAuthresp) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) error {
+func (msg *MsgAuthresp) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding) error {
 	var err error
 
 	msg.PublicKey, err = ReadVarBytes(r, pver, msg.MaxPayloadLength(pver), "challenge")
@@ -53,7 +53,7 @@ func (msg *MsgAuthresp) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding)
 
 // BsvEncode encodes the receiver to w using the bitcoin protocol encoding.
 // This is part of the Message interface implementation.
-func (msg *MsgAuthresp) BsvEncode(w io.Writer, pver uint32, enc MessageEncoding) error {
+func (msg *MsgAuthresp) BsvEncode(w io.Writer, _ uint32, _ MessageEncoding) error {
 	return writeElements(w, msg.PublicKeyLength, msg.PublicKey, msg.ClientNonce, msg.SignatureLength, msg.Signature)
 }
 
@@ -65,7 +65,7 @@ func (msg *MsgAuthresp) Command() string {
 
 // MaxPayloadLength returns the maximum length the payload can be for the
 // receiver.  This is part of the Message interface implementation.
-func (msg *MsgAuthresp) MaxPayloadLength(pver uint32) uint64 {
+func (msg *MsgAuthresp) MaxPayloadLength(_ uint32) uint64 {
 	return uint64(4 + SECP256K1_COMP_PUB_KEY_SIZE_IN_BYTES + 8 + 4 + SECP256K1_DER_SIGN_MAX_SIZE_IN_BYTES)
 }
 

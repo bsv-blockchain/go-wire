@@ -9,7 +9,7 @@ import (
 	"io"
 )
 
-// fixedWriter implements the io.Writer interface and intentially allows
+// fixedWriter implements the io.Writer interface and intentionally allows
 // testing of error paths by forcing short writes.
 type fixedWriter struct {
 	b   []byte
@@ -33,21 +33,21 @@ func (w *fixedWriter) Write(p []byte) (n int, err error) {
 	return
 }
 
-// Bytes returns the bytes already written to the fixed writer.
+// Bytes return the bytes already written to the fixed writer.
 func (w *fixedWriter) Bytes() []byte {
 	return w.b
 }
 
 // newFixedWriter returns a new io.Writer that will error once more bytes than
 // the specified max have been written.
-func newFixedWriter(max int) io.Writer {
-	b := make([]byte, max)
+func newFixedWriter(maxVal int) io.Writer {
+	b := make([]byte, maxVal)
 	fw := fixedWriter{b, 0}
 
 	return &fw
 }
 
-// fixedReader implements the io.Reader interface and intentially allows
+// fixedReader implements the io.Reader interface and intentionally allows
 // testing of error paths by forcing short reads.
 type fixedReader struct {
 	buf   []byte
@@ -69,8 +69,8 @@ func (fr *fixedReader) Read(p []byte) (n int, err error) {
 
 // newFixedReader returns a new io.Reader that will error once more bytes than
 // the specified max have been read.
-func newFixedReader(max int, buf []byte) io.Reader {
-	b := make([]byte, max)
+func newFixedReader(maxVal int, buf []byte) io.Reader {
+	b := make([]byte, maxVal)
 	if buf != nil {
 		copy(b, buf)
 	}

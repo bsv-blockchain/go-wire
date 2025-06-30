@@ -25,24 +25,24 @@ const (
 )
 
 var (
-	// littleEndian is a convenience variable since binary.LittleEndian is
+	// littleEndian have been a convenience variable since binary.LittleEndian is
 	// quite long.
 	littleEndian = binary.LittleEndian
 
-	// bigEndian is a convenience variable since binary.BigEndian is quite
+	// bigEndian have been a convenience variable since binary.BigEndian is quite
 	// long.
 	bigEndian = binary.BigEndian
 )
 
 // binaryFreeList defines a concurrent safe free list of byte slices (up to the
 // maximum number defined by the binaryFreeListMaxItems constant) that have a
-// cap of 8 (thus it supports up to a uint64).  It is used to provide temporary
+// cap of 8 (thus it supports up to an uint64).  It is used to provide temporary
 // buffers for serializing and deserializing primitive numbers to and from their
-// binary encoding in order to greatly reduce the number of allocations
+// binary encoding to greatly reduce the number of allocations
 // required.
 //
 // For convenience, functions are provided for each of the primitive unsigned
-// integers that automatically obtain a buffer from the free list, perform the
+// integers that automatically get a buffer from the free list, perform the
 // necessary binary conversion, read from or write to the given io.Reader or
 // io.Writer, and return the buffer to the free list.
 type binaryFreeList chan []byte
@@ -71,7 +71,7 @@ func (l binaryFreeList) Return(buf []byte) {
 }
 
 // Uint8 reads a single byte from the provided reader using a buffer from the
-// free list and returns it as a uint8.
+// free list and returns it as an uint8.
 func (l binaryFreeList) Uint8(r io.Reader) (uint8, error) {
 	buf := l.Borrow()[:1]
 	if _, err := io.ReadFull(r, buf); err != nil {
@@ -189,12 +189,12 @@ var binarySerializer binaryFreeList = make(chan []byte, binaryFreeListMaxItems)
 var errNonCanonicalVarInt = "non-canonical varint %x - discriminant %x must " +
 	"encode a value greater than %x"
 
-// uint32Time represents a unix timestamp encoded with a uint32.  It is used as
+// uint32Time represents an unix timestamp encoded with an uint32.  It is used as
 // a way to signal the readElement function how to decode a timestamp into a Go
 // time.Time since it is otherwise ambiguous.
 type uint32Time time.Time
 
-// int64Time represents a unix timestamp encoded with an int64.  It is used as
+// int64Time represents an unix timestamp encoded with an int64.  It is used as
 // a way to signal the readElement function how to decode a timestamp into a Go
 // time.Time since it is otherwise ambiguous.
 type int64Time time.Time
@@ -385,7 +385,7 @@ func readElements(r io.Reader, elements ...interface{}) error {
 	return nil
 }
 
-// writeElement writes the little endian representation of element to w.
+// writeElement writes the little endian representation of an element to w.
 func writeElement(w io.Writer, element interface{}) error {
 	// Attempt to write the element based on the concrete type via fast
 	// type assertions first.
@@ -530,8 +530,8 @@ func writeElements(w io.Writer, elements ...interface{}) error {
 	return nil
 }
 
-// ReadVarInt reads a variable length integer from r and returns it as a uint64.
-func ReadVarInt(r io.Reader, pver uint32) (uint64, error) {
+// ReadVarInt reads a variable length integer from r and returns it as an uint64.
+func ReadVarInt(r io.Reader, _ uint32) (uint64, error) {
 	discriminant, err := binarySerializer.Uint8(r)
 	if err != nil {
 		return 0, err
@@ -550,14 +550,15 @@ func ReadVarInt(r io.Reader, pver uint32) (uint64, error) {
 
 		// The encoding is not canonical if the value could have been
 		// encoded using fewer bytes.
-		min := uint64(0x100000000)
-		if rv < min {
+		minVal := uint64(0x100000000)
+		if rv < minVal {
 			return 0, messageError("ReadVarInt", fmt.Sprintf(
-				errNonCanonicalVarInt, rv, discriminant, min))
+				errNonCanonicalVarInt, rv, discriminant, minVal))
 		}
 
 	case 0xfe:
-		sv, err := binarySerializer.Uint32(r, littleEndian)
+		var sv uint32
+		sv, err = binarySerializer.Uint32(r, littleEndian)
 		if err != nil {
 			return 0, err
 		}
@@ -566,14 +567,15 @@ func ReadVarInt(r io.Reader, pver uint32) (uint64, error) {
 
 		// The encoding is not canonical if the value could have been
 		// encoded using fewer bytes.
-		min := uint64(0x10000)
-		if rv < min {
+		minVal := uint64(0x10000)
+		if rv < minVal {
 			return 0, messageError("ReadVarInt", fmt.Sprintf(
-				errNonCanonicalVarInt, rv, discriminant, min))
+				errNonCanonicalVarInt, rv, discriminant, minVal))
 		}
 
 	case 0xfd:
-		sv, err := binarySerializer.Uint16(r, littleEndian)
+		var sv uint16
+		sv, err = binarySerializer.Uint16(r, littleEndian)
 		if err != nil {
 			return 0, err
 		}
@@ -582,10 +584,10 @@ func ReadVarInt(r io.Reader, pver uint32) (uint64, error) {
 
 		// The encoding is not canonical if the value could have been
 		// encoded using fewer bytes.
-		min := uint64(0xfd)
-		if rv < min {
+		minVal := uint64(0xfd)
+		if rv < minVal {
 			return 0, messageError("ReadVarInt", fmt.Sprintf(
-				errNonCanonicalVarInt, rv, discriminant, min))
+				errNonCanonicalVarInt, rv, discriminant, minVal))
 		}
 
 	default:
@@ -597,7 +599,7 @@ func ReadVarInt(r io.Reader, pver uint32) (uint64, error) {
 
 // WriteVarInt serializes val to w using a variable number of bytes depending
 // on its value.
-func WriteVarInt(w io.Writer, pver uint32, val uint64) error {
+func WriteVarInt(w io.Writer, _ uint32, val uint64) error {
 	if val < 0xfd {
 		return binarySerializer.PutUint8(w, uint8(val))
 	}
@@ -665,7 +667,7 @@ func ReadVarString(r io.Reader, pver uint32) (string, error) {
 
 	// Prevent variable length strings that are larger than the maximum
 	// message size.  It would be possible to cause memory exhaustion and
-	// panics without a sane upper bound on this count.
+	//  panic without a sane upper bound on this count.
 	if count > maxMessagePayload() {
 		str := fmt.Sprintf("variable length string is too long "+
 			"[count %d, max %d]", count, maxMessagePayload())
@@ -710,8 +712,8 @@ func ReadVarBytes(r io.Reader, pver uint32, maxAllowed uint64,
 		return nil, err
 	}
 
-	// Prevent byte array larger than the max message size.  It would
-	// be possible to cause memory exhaustion and panics without a sane
+	// Prevent a byte array larger than the max message size.  It would
+	// be possible to cause memory exhaustion and panic without a sane
 	// upper bound on this count.
 	if count > maxAllowed {
 		str := fmt.Sprintf("%s is larger than the max allowed size "+
