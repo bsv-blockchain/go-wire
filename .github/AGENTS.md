@@ -18,19 +18,14 @@ Additional `AGENTS.md` files **may exist in subdirectories** to provide more con
 
 ## 🔍 Project Overview
 
-**go-wire** is a production-ready scaffold for building new Go libraries with zero setup friction. 
-It ships with opinionated defaults that reflect current best practices—clean project layout, 
-module-aware dependency management, and Makefiles that automate everything from linting and race-condition 
-testing to snapshot releases. Out of the box, GitHub Actions orchestrate CI/CD: unit tests (with `testify`), 
-coverage upload to Codecov, static analysis via golangci-lint and CodeQL, vulnerability auditing with Nancy, 
-and one-command releases through GoReleaser.
+**go-wire** provides a complete Go implementation of the Bitcoin SV (BSV) wire protocol.
+It defines all standard network messages and manages serialization, deserialization,
+and checksum validation.
 
-Beyond automation, the template supplies all the "undifferentiated heavy lifting" a maintainer usually 
-adds manually: standard README and license, issue and PR templates, CODEOWNERS, semantic version tagging helpers, 
-label synchronization, and optional Slack/Discord/Twitter release announcements. Example functions, fuzz tests and 
-benchmarks are already wired in, so you can focus on writing library code instead of plumbing. 
-Clone, rename a few placeholders, and you have a fully instrumented Go library that is ready for continuous 
-delivery and open-source collaboration from day one.
+The package includes helpers for reading and writing messages over network
+connections and constants describing the supported BSV networks.
+Extensive tests and examples demonstrate how to embed BSV networking
+capabilities in custom nodes or tooling.
 
 <br/>
 
@@ -729,6 +724,7 @@ All contributors are expected to append entries here when making meaningful chan
 | Date       | Author   | Summary of Changes                                           |
 |------------|----------|--------------------------------------------------------------|
 | 2025-06-30 | @icellan | Added pre-commit hook guidelines and config reference        |
+| 2025-06-30 | @assistant | Updated project overview to reflect BSV wire protocol library |
 | 2025-06-27 | @icellan | Adapted to fix this project go-wire                          |
 | 2025-06-26 | @icellan | Documented citation and configuration files for contributors |
 > For minor edits (typos, formatting), this log update is optional. For all behavioral or structural changes, log entries are **required**.
