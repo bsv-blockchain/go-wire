@@ -541,7 +541,8 @@ func ReadVarInt(r io.Reader, pver uint32) (uint64, error) {
 
 	switch discriminant {
 	case 0xff:
-		sv, err := binarySerializer.Uint64(r, littleEndian)
+		var sv uint64
+		sv, err = binarySerializer.Uint64(r, littleEndian)
 		if err != nil {
 			return 0, err
 		}
@@ -557,7 +558,8 @@ func ReadVarInt(r io.Reader, pver uint32) (uint64, error) {
 		}
 
 	case 0xfe:
-		sv, err := binarySerializer.Uint32(r, littleEndian)
+		var sv uint32
+		sv, err = binarySerializer.Uint32(r, littleEndian)
 		if err != nil {
 			return 0, err
 		}
@@ -573,7 +575,8 @@ func ReadVarInt(r io.Reader, pver uint32) (uint64, error) {
 		}
 
 	case 0xfd:
-		sv, err := binarySerializer.Uint16(r, littleEndian)
+		var sv uint16
+		sv, err = binarySerializer.Uint16(r, littleEndian)
 		if err != nil {
 			return 0, err
 		}

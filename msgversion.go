@@ -112,7 +112,8 @@ func (msg *MsgVersion) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) 
 	}
 
 	if buf.Len() > 0 {
-		userAgent, err := ReadVarString(buf, pver)
+		var userAgent string
+		userAgent, err = ReadVarString(buf, pver)
 		if err != nil {
 			return err
 		}
