@@ -17,7 +17,7 @@ type MsgSendcmpct struct {
 
 // Bsvdecode decodes r using the bitcoin protocol encoding into the receiver.
 // This is part of the Message interface implementation.
-func (msg *MsgSendcmpct) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) error {
+func (msg *MsgSendcmpct) Bsvdecode(r io.Reader, _ uint32, _ MessageEncoding) error {
 	// Read stop hash
 	err := readElement(r, &msg.SendCmpct)
 	if err != nil {
@@ -34,7 +34,7 @@ func (msg *MsgSendcmpct) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding
 
 // BsvEncode encodes the receiver to w using the bitcoin protocol encoding.
 // This is part of the Message interface implementation.
-func (msg *MsgSendcmpct) BsvEncode(w io.Writer, pver uint32, enc MessageEncoding) error {
+func (msg *MsgSendcmpct) BsvEncode(w io.Writer, _ uint32, _ MessageEncoding) error {
 	return writeElements(w, msg.SendCmpct, msg.Version)
 }
 
@@ -46,7 +46,7 @@ func (msg *MsgSendcmpct) Command() string {
 
 // MaxPayloadLength returns the maximum length the payload can be for the
 // receiver.  This is part of the Message interface implementation.
-func (msg *MsgSendcmpct) MaxPayloadLength(pver uint32) uint64 {
+func (msg *MsgSendcmpct) MaxPayloadLength(_ uint32) uint64 {
 	return 1 + 8
 }
 
