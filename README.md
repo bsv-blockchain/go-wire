@@ -31,7 +31,7 @@ BSV Blockchain Wire Protocol
           <img src="https://goreportcard.com/badge/github.com/bsv-blockchain/go-wire?style=flat" alt="Go Report Card">
         </a><br/>
 		<a href="https://codecov.io/gh/bsv-blockchain/go-wire">
-          <img src="https://codecov.io/gh/bsv-blockchain/go-wire/branch/master/graph/badge.svg?style=flat&token=iBdJQpOej9" alt="Code Coverage">
+          <img src="https://codecov.io/gh/bsv-blockchain/go-wire/branch/master/graph/badge.svg?style=flat" alt="Code Coverage">
         </a><br/>
 		<a href="https://scorecard.dev/viewer/?uri=github.com/bsv-blockchain/go-wire">
           <img src="https://api.scorecard.dev/projects/github.com/bsv-blockchain/go-wire/badge?logo=springsecurity&logoColor=white" alt="OpenSSF Scorecard">
@@ -65,10 +65,7 @@ BSV Blockchain Wire Protocol
           <img src="https://img.shields.io/github/contributors/bsv-blockchain/go-wire?style=flat&logo=contentful&logoColor=white" alt="Contributors">
         </a><br/>
         <a href="https://github.com/sponsors/bsv-blockchain">
-          <img src="https://img.shields.io/badge/sponsor-MrZ-181717.svg?logo=github&style=flat" alt="Sponsor">
-        </a><br/>
-        <a href="https://mrz1818.com/?tab=tips&utm_source=github&utm_medium=sponsor-link&utm_campaign=go-wire&utm_term=go-wire&utm_content=go-wire">
-          <img src="https://img.shields.io/badge/donate-bitcoin-ff9900.svg?logo=bitcoin&style=flat" alt="Donate Bitcoin">
+          <img src="https://img.shields.io/badge/sponsor-BSV-181717.svg?logo=github&style=flat" alt="Sponsor">
         </a>
       </td>
     </tr>
@@ -99,6 +96,8 @@ This package has intentionally been designed so it can be used as a standalone
 package for any projects needing to interface with bitcoin peers at the wire
 protocol level.
 
+<br/>
+
 ## 📦 Installation
 
 **go-wire** requires a [supported release of Go](https://golang.org/doc/devel/release.html#policy).
@@ -111,12 +110,9 @@ go get -u github.com/bsv-blockchain/go-wire
 ## 📚 Documentation
 
 - **API Reference** – Dive into the godocs at [pkg.go.dev/github.com/bsv-blockchain/go-wire](https://pkg.go.dev/github.com/bsv-blockchain/go-wire)
-- **Usage Examples** – Browse practical patterns either the [examples directory](examples) or view the [example functions](template_example_test.go)
+- **Usage Examples** – Browse practical patterns either the [examples directory](examples) or view the example functions
 - **Benchmarks** – Check the latest numbers in the [benchmark results](#benchmark-results)
-- **Test Suite** – Review both the [unit tests](template_test.go) and [fuzz tests](template_fuzz_test.go) (powered by [`testify`](https://github.com/stretchr/testify))
-
-> **Good to know:** `go-wire` ships with *zero* runtime dependencies.  
-> The only external package we use is `testify`—and that's strictly for tests.
+- **Test Suite** – Review both the [unit tests](wire_test.go) and [fuzz tests](wire_fuzz_test.go) (powered by [`testify`](https://github.com/stretchr/testify))
 
 <br/>
 
@@ -170,7 +166,6 @@ This glossary describes each tracked file in the repository and notes if it is r
 | [.github/CODE_STANDARDS.md](.github/CODE_STANDARDS.md)                                         | Coding style guide                              | GitHub           |
 | [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md)                                             | How to contribute to the project                | GitHub           |
 | [.github/FUNDING.yml](.github/FUNDING.yml)                                                     | Funding links displayed by GitHub               | GitHub           |
-| [.github/IMAGES/go-share-image.png](.github/IMAGES/go-share-image.png)                         | Social sharing image                            | GitHub           |
 | [.github/ISSUE_TEMPLATE/bug_report.yml](.github/ISSUE_TEMPLATE/bug_report.yml)                 | Issue template for bug reports                  | GitHub           |
 | [.github/ISSUE_TEMPLATE/feature_request.yml](.github/ISSUE_TEMPLATE/feature_request.yml)       | Issue template for feature requests             | GitHub           |
 | [.github/ISSUE_TEMPLATE/question.yml](.github/ISSUE_TEMPLATE/question.yml)                     | Issue template for questions                    | GitHub           |
@@ -198,26 +193,18 @@ This glossary describes each tracked file in the repository and notes if it is r
 | [.goreleaser.yml](.goreleaser.yml)                                                             | GoReleaser configuration for release automation | GoReleaser       |
 | [.make/common.mk](.make/common.mk)                                                             | Shared make tasks                               | Make             |
 | [.make/go.mk](.make/go.mk)                                                                     | Go-specific make tasks                          | Make             |
-| [.make/temp.mk](.make/temp.mk)                                                                 | Temporary makefile for internal use             | Make             |
 | [.pre-commit-config.yaml](.pre-commit-config.yaml)                                             | Pre-commit hooks configuration                  | Pre-commit       |
 | [.vscode/extensions.json](.vscode/extensions.json)                                             | Recommended VS Code extensions                  | VS Code          |
 | [.vscode/launch.json](.vscode/launch.json)                                                     | VS Code debugging configuration                 | VS Code          |
 | [.vscode/settings.json](.vscode/settings.json)                                                 | VS Code workspace settings                      | VS Code          |
 | [.vscode/tasks.json](.vscode/tasks.json)                                                       | VS Code tasks configuration                     | VS Code          |
 | [CITATION.cff](CITATION.cff)                                                                   | Citation metadata recognized by GitHub          | GitHub           |
-| [Dockerfile](Dockerfile)                                                                       | Docker image build instructions                 | Docker           |
 | [LICENSE](LICENSE)                                                                             | Project license                                 | Yours!           |
 | [Makefile](Makefile)                                                                           | Build and lint automation                       | Make             |
 | [README.md](README.md)                                                                         | Project overview and usage                      | Yours!           |
 | [codecov.yml](codecov.yml)                                                                     | Codecov upload configuration                    | Codecov          |
-| [examples/example.go](examples/example.go)                                                     | Example usage of the library                    | None             |
 | [go.mod](go.mod)                                                                               | Go module definition                            | Go               |
 | [go.sum](go.sum)                                                                               | Dependency checksums generated by Go            | Go               |
-| [template.go](template.go)                                                                     | Main package source code                        | Yours!           |
-| [template_benchmark_test.go](template_benchmark_test.go)                                       | Go benchmark tests                              | Go test          |
-| [template_example_test.go](template_example_test.go)                                           | Example tests for documentation                 | Go test          |
-| [template_fuzz_test.go](template_fuzz_test.go)                                                 | Go fuzz tests                                   | Go test          |
-| [template_test.go](template_test.go)                                                           | Unit tests                                      | Go test          |
 </details>
 
 <details>
@@ -280,7 +267,6 @@ govulncheck-install   ## Install govulncheck
 help                  ## Display this help message
 install-go            ## Install using go install with specific version
 install-releaser      ## Install GoReleaser
-install-template      ## Kick-start a fresh copy of go-wire (run once!)
 install               ## Install the application binary
 lint                  ## Run the golangci-lint application (install if not found)
 release-snap          ## Build snapshot binaries
@@ -342,7 +328,9 @@ This command ensures all dependencies are brought up to date in a single step, i
 
 </details>
 
-## 🔄 Pre-commit Hooks
+<details>
+<summary><strong><code>Pre-commit Hooks</code></strong></summary>
+<br/>
 
 Set up the optional [pre-commit](https://pre-commit.com) hooks to run the same formatting, linting, and tests defined in [AGENTS.md](.github/AGENTS.md) before every commit:
 
@@ -352,6 +340,8 @@ pre-commit install
 ```
 
 The hooks are configured in [.pre-commit-config.yaml](.pre-commit-config.yaml) and mirror the CI pipeline.
+
+</details>
 
 <br/>
 
@@ -369,7 +359,7 @@ make test
 
 ## ⚡ Benchmarks
 
-Run the Go [benchmarks](template_benchmark_test.go):
+Run the Go [benchmarks](wire_benchmark_test.go):
 
 ```bash script
 make bench
@@ -379,9 +369,9 @@ make bench
 
 ### Benchmark Results
 
-| Benchmark                           | Iterations | ns/op | B/op | allocs/op |
-|-------------------------------------|------------|------:|-----:|----------:|
-| [Greet](template_benchmark_test.go) | 21,179,739 | 56.59 |   40 |         2 |
+| Benchmark                          | Iterations | ns/op | B/op | allocs/op |
+|------------------------------------|------------|------:|-----:|----------:|
+| [Function](wire_benchmark_test.go) | 21,179,739 | 56.59 |   40 |         2 |
 
 > These benchmarks reflect fast, allocation-free lookups for most retrieval functions, ensuring optimal performance in production environments.
 > Performance benchmarks for the core functions in this library, executed on an Apple M1 Max (ARM64).
@@ -407,8 +397,8 @@ Edit `AGENTS.md` first when adjusting these policies, and keep the other files i
 
 ## 👥 Maintainers
 | [<img src="https://github.com/bsv-blockchain.png" height="50" alt="MrZ" />](https://github.com/bsv-blockchain) |
-|:------------------------------------------------------------------------------------------------:|
-|                                [MrZ](https://github.com/bsv-blockchain)                                 |
+|:--------------------------------------------------------------------------------------------------------------:|
+|                                    [BSV](https://github.com/bsv-blockchain)                                    |
 
 <br/>
 
