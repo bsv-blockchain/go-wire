@@ -135,10 +135,10 @@ func TestElementWire(t *testing.T) {
 			[]byte{0x01, 0x00, 0x00, 0x00},
 		},
 		{
-			BitcoinNet(MainNet),
+			MainNet,
 			[]byte{0xe3, 0xe1, 0xf3, 0xe8},
 		},
-		// Type not supported by the "fast" path and requires reflection.
+		// Type is not supported by the "fast" path and requires reflection.
 		{
 			writeElementReflect(1),
 			[]byte{0x01, 0x00, 0x00, 0x00},
@@ -148,7 +148,7 @@ func TestElementWire(t *testing.T) {
 	t.Logf("Running %d tests", len(tests))
 
 	for i, test := range tests {
-		// Write to wire format.
+		// Write to a wire format.
 		var buf bytes.Buffer
 		err := writeElement(&buf, test.in)
 
@@ -163,7 +163,7 @@ func TestElementWire(t *testing.T) {
 			continue
 		}
 
-		// Read from wire format.
+		// Read from a wire format.
 		rbuf := bytes.NewReader(test.buf)
 		val := test.in
 
@@ -227,9 +227,9 @@ func TestElementWireErrors(t *testing.T) {
 			}),
 			0, io.ErrShortWrite, io.EOF,
 		},
-		{ServiceFlag(SFNodeNetwork), 0, io.ErrShortWrite, io.EOF},
-		{InvType(InvTypeTx), 0, io.ErrShortWrite, io.EOF},
-		{BitcoinNet(MainNet), 0, io.ErrShortWrite, io.EOF},
+		{SFNodeNetwork, 0, io.ErrShortWrite, io.EOF},
+		{InvTypeTx, 0, io.ErrShortWrite, io.EOF},
+		{MainNet, 0, io.ErrShortWrite, io.EOF},
 	}
 
 	t.Logf("Running %d tests", len(tests))
@@ -441,7 +441,7 @@ func TestVarIntNonCanonical(t *testing.T) {
 	}
 }
 
-// TestVarIntWire tests the serialize size for variable length integers.
+// TestVarIntWire tests the serialized size for variable length integers.
 func TestVarIntSerializeSize(t *testing.T) {
 	tests := []struct {
 		val  uint64 // Value to get the serialized size for
@@ -617,7 +617,7 @@ func TestVarStringOverflowErrors(t *testing.T) {
 	}
 }
 
-// TestVarBytesWire tests wire encode and decode for variable length byte array.
+// TestVarBytesWire tests wire encode and decode for a variable length byte array.
 func TestVarBytesWire(t *testing.T) {
 	pver := ProtocolVersion
 
@@ -691,7 +691,7 @@ func TestVarBytesWireErrors(t *testing.T) {
 		readErr  error  // Expected read error
 	}{
 		// Latest protocol version with intentional read/write errors.
-		// Force errors on empty byte array.
+		// Force errors on an empty byte array.
 		{[]byte{}, []byte{0x00}, pver, 0, io.ErrShortWrite, io.EOF},
 		// Force error on single byte varint + byte array.
 		{[]byte{0x01, 0x02, 0x03}, []byte{0x04}, pver, 2, io.ErrShortWrite, io.ErrUnexpectedEOF},

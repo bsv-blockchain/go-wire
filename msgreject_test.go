@@ -79,8 +79,8 @@ func TestRejectLatest(t *testing.T) {
 			cmd, wantCmd)
 	}
 
-	// Ensure max payload is expected value for latest protocol version.
-	wantPayload := uint64(maxMessagePayload())
+	// Ensure max payload is expected value for a latest protocol version.
+	wantPayload := maxMessagePayload()
 	maxPayload := msg.MaxPayloadLength(pver)
 
 	if maxPayload != wantPayload {

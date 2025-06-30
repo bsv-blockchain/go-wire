@@ -362,7 +362,7 @@ func (msg *MsgTx) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) error
 	// Prevent more input transactions than could possibly fit into a
 	// message.  It would be possible to cause memory exhaustion and panics
 	// without a sane upper bound on this count.
-	if count > uint64(maxTxInPerMessage()) {
+	if count > maxTxInPerMessage() {
 		str := fmt.Sprintf("too many input transactions to fit into "+
 			"max message size [count %d, max %d]", count, maxTxInPerMessage())
 		return messageError("MsgTx.Bsvdecode", str)
@@ -423,7 +423,7 @@ func (msg *MsgTx) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) error
 	// Prevent more output transactions than could possibly fit into a
 	// message.  It would be possible to cause memory exhaustion and panics
 	// without a sane upper bound on this count.
-	if count > uint64(maxTxOutPerMessage()) {
+	if count > maxTxOutPerMessage() {
 		returnScriptBuffers()
 
 		str := fmt.Sprintf("too many output transactions to fit into "+

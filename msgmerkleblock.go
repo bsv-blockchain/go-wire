@@ -68,7 +68,7 @@ func (msg *MsgMerkleBlock) Bsvdecode(r io.Reader, pver uint32, enc MessageEncodi
 		return err
 	}
 
-	if count > uint64(maxTxPerBlock()) {
+	if count > maxTxPerBlock() {
 		str := fmt.Sprintf("too many transaction hashes for message "+
 			"[count %v, max %v]", count, maxTxPerBlock())
 		return messageError("MsgMerkleBlock.Bsvdecode", str)
