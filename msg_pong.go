@@ -15,14 +15,14 @@ import (
 //
 // This message was not added until protocol versions AFTER BIP0031Version.
 type MsgPong struct {
-	// Unique value associated with message that is used to identify
-	// specific ping message.
+	// Unique value associated with a message that is used to identify
+	// a specific ping message.
 	Nonce uint64
 }
 
 // Bsvdecode decodes r using the bitcoin protocol encoding into the receiver.
 // This is part of the Message interface implementation.
-func (msg *MsgPong) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) error {
+func (msg *MsgPong) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding) error {
 	// NOTE: <= is not a mistake here.  The BIP0031 was defined as AFTER
 	// the version unlike most others.
 	if pver <= BIP0031Version {
@@ -36,7 +36,7 @@ func (msg *MsgPong) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) err
 
 // BsvEncode encodes the receiver to w using the bitcoin protocol encoding.
 // This is part of the Message interface implementation.
-func (msg *MsgPong) BsvEncode(w io.Writer, pver uint32, enc MessageEncoding) error {
+func (msg *MsgPong) BsvEncode(w io.Writer, pver uint32, _ MessageEncoding) error {
 	// NOTE: <= is not a mistake here.  The BIP0031 was defined as AFTER
 	// the version unlike most others.
 	if pver <= BIP0031Version {

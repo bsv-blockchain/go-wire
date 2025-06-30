@@ -6,6 +6,7 @@ package wire
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"reflect"
 	"testing"
@@ -27,7 +28,7 @@ func TestFilterLoadLatest(t *testing.T) {
 			cmd, wantCmd)
 	}
 
-	// Ensure max payload is expected value for latest protocol version.
+	// Ensure max payload is expected value for the latest protocol version.
 	wantPayload := uint64(36012)
 	maxPayload := msg.MaxPayloadLength(pver)
 
@@ -60,7 +61,7 @@ func TestFilterLoadCrossProtocol(t *testing.T) {
 	data := []byte{0x01, 0x02}
 	msg := NewMsgFilterLoad(data, 10, 0, 0)
 
-	// Encode with latest protocol version.
+	// Encode with the latest protocol version.
 	var buf bytes.Buffer
 
 	err := msg.BsvEncode(&buf, ProtocolVersion, BaseEncoding)
@@ -69,7 +70,7 @@ func TestFilterLoadCrossProtocol(t *testing.T) {
 			err)
 	}
 
-	// Decode with old protocol version.
+	// Decode with an old protocol version.
 	var readmsg MsgFilterLoad
 
 	err = readmsg.Bsvdecode(&buf, BIP0031Version, BaseEncoding)
@@ -84,7 +85,7 @@ func TestFilterLoadMaxFilterSize(t *testing.T) {
 	data := bytes.Repeat([]byte{0xff}, 36001)
 	msg := NewMsgFilterLoad(data, 10, 0, 0)
 
-	// Encode with latest protocol version.
+	// Encode with the latest protocol version.
 	var buf bytes.Buffer
 
 	err := msg.BsvEncode(&buf, ProtocolVersion, BaseEncoding)
@@ -93,7 +94,7 @@ func TestFilterLoadMaxFilterSize(t *testing.T) {
 			"have %v", msg)
 	}
 
-	// Decode with latest protocol version.
+	// Decode with the latest protocol version.
 	readbuf := bytes.NewReader(data)
 
 	err = msg.Bsvdecode(readbuf, ProtocolVersion, BaseEncoding)
@@ -108,7 +109,7 @@ func TestFilterLoadMaxHashFuncsSize(t *testing.T) {
 	data := bytes.Repeat([]byte{0xff}, 10)
 	msg := NewMsgFilterLoad(data, 61, 0, 0)
 
-	// Encode with latest protocol version.
+	// Encode with the latest protocol version.
 	var buf bytes.Buffer
 
 	err := msg.BsvEncode(&buf, ProtocolVersion, BaseEncoding)
@@ -124,7 +125,7 @@ func TestFilterLoadMaxHashFuncsSize(t *testing.T) {
 		0x00, 0x00, 0x00, 0x00, // tweak
 		0x00, // update Type
 	}
-	// Decode with latest protocol version.
+	// Decode with the latest protocol version.
 	readbuf := bytes.NewReader(newBuf)
 
 	err = msg.Bsvdecode(readbuf, ProtocolVersion, BaseEncoding)
@@ -206,8 +207,9 @@ func TestFilterLoadWireErrors(t *testing.T) {
 
 		// For errors which are not of type MessageError, check them for
 		// equality.
-		if _, ok := err.(*MessageError); !ok {
-			if err != test.writeErr {
+		var msgError *MessageError
+		if !errors.As(err, &msgError) {
+			if !errors.Is(err, test.writeErr) {
 				t.Errorf("BsvEncode #%d wrong error got: %v, "+
 					"want: %v", i, err, test.writeErr)
 				continue
@@ -228,8 +230,8 @@ func TestFilterLoadWireErrors(t *testing.T) {
 
 		// For errors which are not of type MessageError, check them for
 		// equality.
-		if _, ok := err.(*MessageError); !ok {
-			if err != test.readErr {
+		if !errors.As(err, &msgError) {
+			if !errors.Is(err, test.readErr) {
 				t.Errorf("Bsvdecode #%d wrong error got: %v, "+
 					"want: %v", i, err, test.readErr)
 				continue

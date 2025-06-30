@@ -6,6 +6,7 @@ package wire
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"reflect"
@@ -36,7 +37,7 @@ func TestTx(t *testing.T) {
 			cmd, wantCmd)
 	}
 
-	// Ensure max payload is expected value for latest protocol version.
+	// Ensure max payload is expected value for the latest protocol version.
 	wantPayload := fixedExcessiveBlockSize
 	maxPayload := msg.MaxPayloadLength(pver)
 
@@ -431,7 +432,7 @@ func TestTxWireErrors(t *testing.T) {
 		w := newFixedWriter(test.max)
 
 		err := test.in.BsvEncode(w, test.pver, test.enc)
-		if err != test.writeErr {
+		if !errors.Is(err, test.writeErr) {
 			t.Errorf("BsvEncode #%d wrong error got: %v, want: %v",
 				i, err, test.writeErr)
 			continue
@@ -443,7 +444,7 @@ func TestTxWireErrors(t *testing.T) {
 		r := newFixedReader(test.max, test.buf)
 
 		err = msg.Bsvdecode(r, test.pver, test.enc)
-		if err != test.readErr {
+		if !errors.Is(err, test.readErr) {
 			t.Errorf("Bsvdecode #%d wrong error got: %v, want: %v",
 				i, err, test.readErr)
 			continue
@@ -556,7 +557,7 @@ func TestTxSerializeErrors(t *testing.T) {
 	}{
 		// Force error in version.
 		{multiTx, multiTxEncoded, 0, io.ErrShortWrite, io.EOF},
-		// Force error in number of transaction inputs.
+		// Force error in the number of transaction inputs.
 		{multiTx, multiTxEncoded, 4, io.ErrShortWrite, io.EOF},
 		// Force error in transaction input previous block hash.
 		{multiTx, multiTxEncoded, 5, io.ErrShortWrite, io.EOF},
@@ -566,9 +567,9 @@ func TestTxSerializeErrors(t *testing.T) {
 		{multiTx, multiTxEncoded, 41, io.ErrShortWrite, io.EOF},
 		// Force error in transaction input signature script.
 		{multiTx, multiTxEncoded, 42, io.ErrShortWrite, io.EOF},
-		// Force error in transaction input sequence.
+		// Force error in a transaction input sequence.
 		{multiTx, multiTxEncoded, 49, io.ErrShortWrite, io.EOF},
-		// Force error in number of transaction outputs.
+		// Force error in the number of transaction outputs.
 		{multiTx, multiTxEncoded, 53, io.ErrShortWrite, io.EOF},
 		// Force error in transaction output value.
 		{multiTx, multiTxEncoded, 54, io.ErrShortWrite, io.EOF},
@@ -587,7 +588,7 @@ func TestTxSerializeErrors(t *testing.T) {
 		w := newFixedWriter(test.max)
 
 		err := test.in.Serialize(w)
-		if err != test.writeErr {
+		if !errors.Is(err, test.writeErr) {
 			t.Errorf("Serialize #%d wrong error got: %v, want: %v",
 				i, err, test.writeErr)
 			continue
@@ -599,7 +600,7 @@ func TestTxSerializeErrors(t *testing.T) {
 		r := newFixedReader(test.max, test.buf)
 
 		err = tx.Deserialize(r)
-		if err != test.readErr {
+		if !errors.Is(err, test.readErr) {
 			t.Errorf("Deserialize #%d wrong error got: %v, want: %v",
 				i, err, test.readErr)
 			continue
@@ -654,7 +655,7 @@ func TestTxOverflowErrors(t *testing.T) {
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Previous output hash
-				0xff, 0xff, 0xff, 0xff, // Prevous output index
+				0xff, 0xff, 0xff, 0xff, // Previous output index
 				0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 				0xff, // Varint for length of signature script
 			}, pver, BaseEncoding, txVer, &MessageError{},
@@ -670,13 +671,13 @@ func TestTxOverflowErrors(t *testing.T) {
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Previous output hash
-				0xff, 0xff, 0xff, 0xff, // Prevous output index
+				0xff, 0xff, 0xff, 0xff, // Previous output index
 				0x00,                   // Varint for length of signature script
 				0xff, 0xff, 0xff, 0xff, // Sequence
 				0x01,                                           // Varint for number of output transactions
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Transaction amount
 				0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-				0xff, // Varint for length of public key script
+				0xff, // Varint for length of a public key script
 			}, pver, BaseEncoding, txVer, &MessageError{},
 		},
 	}
@@ -719,10 +720,10 @@ func TestTxSerializeSizeStripped(t *testing.T) {
 		in   *MsgTx // Tx to encode
 		size int    // Expected serialized size
 	}{
-		// No inputs or outpus.
+		// No inputs or outputs.
 		{noTx, 10},
 
-		// Transcaction with an input and an output.
+		// Transaction with an input and an output.
 		{multiTx, 210},
 	}
 
@@ -799,7 +800,7 @@ var multiTxEncoded = []byte{
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Previous output hash
-	0xff, 0xff, 0xff, 0xff, // Prevous output index
+	0xff, 0xff, 0xff, 0xff, // Previous output index
 	0x07,                                     // Varint for length of signature script
 	0x04, 0x31, 0xdc, 0x00, 0x1b, 0x01, 0x62, // Signature script
 	0xff, 0xff, 0xff, 0xff, // Sequence

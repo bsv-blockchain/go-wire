@@ -6,6 +6,7 @@ package wire
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"reflect"
@@ -16,7 +17,7 @@ import (
 	"github.com/libsv/go-bt/v2/chainhash"
 )
 
-// mainNetGenesisHash is the hash of the first block in the block chain for the
+// mainNetGenesisHash is the hash of the first block in the blockchain for the
 // main network (genesis block).
 var mainNetGenesisHash = chainhash.Hash([chainhash.HashSize]byte{ // Make go vet happy.
 	0x6f, 0xe2, 0x8c, 0x0a, 0xb6, 0xf1, 0xb3, 0x72,
@@ -41,10 +42,10 @@ type fakeRandReader struct {
 	err error
 }
 
-// fixedExcessiveBlockSize should not be the default -we want to ensure it will work in all cases
+// fixedExcessiveBlockSize should not be the default - we want to ensure it will work in all cases
 const fixedExcessiveBlockSize uint64 = 42111000
 
-func init() {
+func init() { //nolint:gochecknoinits // this needs to be refactored to a better place
 	// Wire package requires initialization
 	SetLimits(fixedExcessiveBlockSize)
 }
@@ -127,18 +128,18 @@ func TestElementWire(t *testing.T) {
 			},
 		},
 		{
-			ServiceFlag(SFNodeNetwork),
+			SFNodeNetwork,
 			[]byte{0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
 		},
 		{
-			InvType(InvTypeTx),
+			InvTypeTx,
 			[]byte{0x01, 0x00, 0x00, 0x00},
 		},
 		{
-			BitcoinNet(MainNet),
+			MainNet,
 			[]byte{0xe3, 0xe1, 0xf3, 0xe8},
 		},
-		// Type not supported by the "fast" path and requires reflection.
+		// Type is not supported by the "fast" path and requires reflection.
 		{
 			writeElementReflect(1),
 			[]byte{0x01, 0x00, 0x00, 0x00},
@@ -148,7 +149,7 @@ func TestElementWire(t *testing.T) {
 	t.Logf("Running %d tests", len(tests))
 
 	for i, test := range tests {
-		// Write to wire format.
+		// Write to a wire format.
 		var buf bytes.Buffer
 		err := writeElement(&buf, test.in)
 
@@ -163,7 +164,7 @@ func TestElementWire(t *testing.T) {
 			continue
 		}
 
-		// Read from wire format.
+		// Read from a wire format.
 		rbuf := bytes.NewReader(test.buf)
 		val := test.in
 
@@ -227,9 +228,9 @@ func TestElementWireErrors(t *testing.T) {
 			}),
 			0, io.ErrShortWrite, io.EOF,
 		},
-		{ServiceFlag(SFNodeNetwork), 0, io.ErrShortWrite, io.EOF},
-		{InvType(InvTypeTx), 0, io.ErrShortWrite, io.EOF},
-		{BitcoinNet(MainNet), 0, io.ErrShortWrite, io.EOF},
+		{SFNodeNetwork, 0, io.ErrShortWrite, io.EOF},
+		{InvTypeTx, 0, io.ErrShortWrite, io.EOF},
+		{MainNet, 0, io.ErrShortWrite, io.EOF},
 	}
 
 	t.Logf("Running %d tests", len(tests))
@@ -239,7 +240,7 @@ func TestElementWireErrors(t *testing.T) {
 		w := newFixedWriter(test.max)
 		err := writeElement(w, test.in)
 
-		if err != test.writeErr {
+		if !errors.Is(err, test.writeErr) {
 			t.Errorf("writeElement #%d wrong error got: %v, want: %v",
 				i, err, test.writeErr)
 			continue
@@ -254,7 +255,7 @@ func TestElementWireErrors(t *testing.T) {
 		}
 
 		err = readElement(r, val)
-		if err != test.readErr {
+		if !errors.Is(err, test.readErr) {
 			t.Errorf("readElement #%d wrong error got: %v, want: %v",
 				i, err, test.readErr)
 			continue
@@ -364,7 +365,7 @@ func TestVarIntWireErrors(t *testing.T) {
 		w := newFixedWriter(test.max)
 		err := WriteVarInt(w, test.pver, test.in)
 
-		if err != test.writeErr {
+		if !errors.Is(err, test.writeErr) {
 			t.Errorf("WriteVarInt #%d wrong error got: %v, want: %v",
 				i, err, test.writeErr)
 			continue
@@ -374,7 +375,7 @@ func TestVarIntWireErrors(t *testing.T) {
 		r := newFixedReader(test.max, test.buf)
 		_, err = ReadVarInt(r, test.pver)
 
-		if err != test.readErr {
+		if !errors.Is(err, test.readErr) {
 			t.Errorf("ReadVarInt #%d wrong error got: %v, want: %v",
 				i, err, test.readErr)
 			continue
@@ -427,7 +428,8 @@ func TestVarIntNonCanonical(t *testing.T) {
 		rbuf := bytes.NewReader(test.in)
 		val, err := ReadVarInt(rbuf, test.pver)
 
-		if _, ok := err.(*MessageError); !ok {
+		var msgError *MessageError
+		if !errors.As(err, &msgError) {
 			t.Errorf("ReadVarInt #%d (%s) unexpected error %v", i,
 				test.name, err)
 			continue
@@ -441,7 +443,7 @@ func TestVarIntNonCanonical(t *testing.T) {
 	}
 }
 
-// TestVarIntWire tests the serialize size for variable length integers.
+// TestVarIntWire tests the serialized size for variable length integers.
 func TestVarIntSerializeSize(t *testing.T) {
 	tests := []struct {
 		val  uint64 // Value to get the serialized size for
@@ -566,7 +568,7 @@ func TestVarStringWireErrors(t *testing.T) {
 		w := newFixedWriter(test.max)
 
 		err := WriteVarString(w, test.pver, test.in)
-		if err != test.writeErr {
+		if !errors.Is(err, test.writeErr) {
 			t.Errorf("WriteVarString #%d wrong error got: %v, want: %v",
 				i, err, test.writeErr)
 			continue
@@ -576,7 +578,7 @@ func TestVarStringWireErrors(t *testing.T) {
 		r := newFixedReader(test.max, test.buf)
 		_, err = ReadVarString(r, test.pver)
 
-		if err != test.readErr {
+		if !errors.Is(err, test.readErr) {
 			t.Errorf("ReadVarString #%d wrong error got: %v, want: %v",
 				i, err, test.readErr)
 			continue
@@ -617,7 +619,7 @@ func TestVarStringOverflowErrors(t *testing.T) {
 	}
 }
 
-// TestVarBytesWire tests wire encode and decode for variable length byte array.
+// TestVarBytesWire tests wire encode and decode for a variable length byte array.
 func TestVarBytesWire(t *testing.T) {
 	pver := ProtocolVersion
 
@@ -691,7 +693,7 @@ func TestVarBytesWireErrors(t *testing.T) {
 		readErr  error  // Expected read error
 	}{
 		// Latest protocol version with intentional read/write errors.
-		// Force errors on empty byte array.
+		// Force errors on an empty byte array.
 		{[]byte{}, []byte{0x00}, pver, 0, io.ErrShortWrite, io.EOF},
 		// Force error on single byte varint + byte array.
 		{[]byte{0x01, 0x02, 0x03}, []byte{0x04}, pver, 2, io.ErrShortWrite, io.ErrUnexpectedEOF},
@@ -706,7 +708,7 @@ func TestVarBytesWireErrors(t *testing.T) {
 		w := newFixedWriter(test.max)
 		err := WriteVarBytes(w, test.pver, test.in)
 
-		if err != test.writeErr {
+		if !errors.Is(err, test.writeErr) {
 			t.Errorf("WriteVarBytes #%d wrong error got: %v, want: %v",
 				i, err, test.writeErr)
 			continue
@@ -717,7 +719,7 @@ func TestVarBytesWireErrors(t *testing.T) {
 		_, err = ReadVarBytes(r, test.pver, maxMessagePayload(),
 			"test payload")
 
-		if err != test.readErr {
+		if !errors.Is(err, test.readErr) {
 			t.Errorf("ReadVarBytes #%d wrong error got: %v, want: %v",
 				i, err, test.readErr)
 			continue
@@ -805,7 +807,7 @@ func TestRandomUint64Errors(t *testing.T) {
 	fr := &fakeRandReader{n: 2, err: io.EOF}
 	nonce, err := randomUint64(fr)
 
-	if err != io.ErrUnexpectedEOF {
+	if !errors.Is(err, io.ErrUnexpectedEOF) {
 		t.Errorf("Error not expected value of %v [%v]",
 			io.ErrUnexpectedEOF, err)
 	}

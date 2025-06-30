@@ -40,8 +40,8 @@ func maxMessagePayload() uint64 {
 }
 
 // the external handlers will allow a third party to handle the wire message
-// in a different way than the default. This is especially useful for instance for very large
-// blocks that may not fit in memory and need to be processed in a different way.
+// differently than the default. This is especially useful, for instance, for very large
+// blocks that may not fit in memory and need to be processed differently.
 var externalHandler = map[string]func(io.Reader, uint64, int) (int, Message, []byte, error){}
 
 // SetExternalHandler allows a third party to override the way a message is handled globally
@@ -105,10 +105,10 @@ var LatestEncoding = BaseEncoding
 // and may therefore contain additional or fewer fields than those which
 // are used directly in the protocol encoded message.
 type Message interface {
-	Bsvdecode(io.Reader, uint32, MessageEncoding) error
-	BsvEncode(io.Writer, uint32, MessageEncoding) error
+	Bsvdecode(r io.Reader, val uint32, enc MessageEncoding) error
+	BsvEncode(w io.Writer, val uint32, enc MessageEncoding) error
 	Command() string
-	MaxPayloadLength(uint32) uint64
+	MaxPayloadLength(val uint32) uint64
 }
 
 // makeEmptyMessage creates a message of the appropriate concrete type based
@@ -217,7 +217,7 @@ func makeEmptyMessage(command string) (Message, error) {
 		msg = &MsgSendcmpct{}
 
 	default:
-		return nil, fmt.Errorf("unhandled command [%s]: %#v", command, msg)
+		return nil, fmt.Errorf("unhandled command [%s]: %#v", command, msg) //nolint:err113 // needs refactoring
 	}
 
 	return msg, nil
@@ -236,7 +236,7 @@ type messageHeader struct {
 func readMessageHeader(r io.Reader) (int, *messageHeader, error) {
 	// Since readElements doesn't return the amount of bytes read, attempt
 	// to read the entire header into a buffer first in case there is a
-	// short read so the proper amount of read bytes are known.  This works
+	// short read, so the proper number of read bytes are known.  This works
 	// since the header is a fixed size.
 	var headerBytes [MessageHeaderSize]byte
 
@@ -252,7 +252,7 @@ func readMessageHeader(r io.Reader) (int, *messageHeader, error) {
 
 	var command [CommandSize]byte
 
-	readElements(hr, &hdr.magic, &command, &hdr.length, &hdr.checksum)
+	_ = readElements(hr, &hdr.magic, &command, &hdr.length, &hdr.checksum)
 
 	// Strip trailing zeros from command string.
 	hdr.command = string(bytes.TrimRight(command[:], string(rune(0))))
@@ -263,7 +263,7 @@ func readMessageHeader(r io.Reader) (int, *messageHeader, error) {
 
 		var extLength uint64
 
-		readElements(hr, &actualCmd, &extLength)
+		_ = readElements(hr, &actualCmd, &extLength)
 
 		hdr.command = string(bytes.TrimRight(actualCmd[:], string(rune(0))))
 		hdr.extLength = extLength
@@ -319,7 +319,7 @@ func WriteMessage(w io.Writer, msg Message, pver uint32, bsvnet BitcoinNet) erro
 func WriteMessageWithEncodingN(w io.Writer, msg Message, pver uint32,
 	bsvnet BitcoinNet, encoding MessageEncoding) (int, error) {
 	if w == nil {
-		return 0, errors.New("writer must not be nil")
+		return 0, errors.New("writer must not be nil") //nolint:err113 // needs refactoring
 	}
 
 	totalBytes := 0
@@ -334,7 +334,7 @@ func WriteMessageWithEncodingN(w io.Writer, msg Message, pver uint32,
 		return totalBytes, messageError("WriteMessage", str)
 	}
 
-	copy(command[:], []byte(cmd))
+	copy(command[:], cmd)
 
 	// Encode the message payload.
 	var bw bytes.Buffer
@@ -371,13 +371,13 @@ func WriteMessageWithEncodingN(w io.Writer, msg Message, pver uint32,
 	hdr.magic = bsvnet
 	hdr.command = cmd
 
-	if lenp > int(math.MaxUint32) {
+	if lenp > math.MaxUint32 {
 		return totalBytes, err
 	}
 
 	lenpUint32 := uint32(lenp)
 
-	if lenpUint32 >= math.MaxUint32 {
+	if lenpUint32 >= math.MaxUint32 { //nolint:staticcheck // skip this for now
 		hdr.length = 0xffffffff
 		hdr.extLength = uint64(lenp)
 	} else {
@@ -395,7 +395,7 @@ func WriteMessageWithEncodingN(w io.Writer, msg Message, pver uint32,
 	}
 
 	// Write header and payload in 1 go.
-	// This w.Write() is locking, so we don't have to worry about concurrent writes.
+	// This w.Write() is locking, so we don't have to worry about concurrent writings.
 	var n int
 	n, err = w.Write(append(hw.Bytes(), payload...))
 	totalBytes += n
@@ -445,7 +445,7 @@ func ReadMessageWithEncodingN(r io.Reader, pver uint32, bsvnet BitcoinNet, enc M
 		return totalBytes, nil, nil, messageError("ReadMessage", str)
 	}
 
-	// Create struct of appropriate message type based on the command.
+	// Create struct of the appropriate message type based on the command.
 	msg, err := makeEmptyMessage(command)
 	if err != nil {
 		discardInput(r, uint64(hdr.length))
@@ -456,7 +456,7 @@ func ReadMessageWithEncodingN(r io.Reader, pver uint32, bsvnet BitcoinNet, enc M
 
 	// Check for maximum length based on the message type as a malicious transactionHandler
 	// could otherwise create a well-formed header and set the length to max
-	// numbers in order to exhaust the machine's memory.
+	// numbers to exhaust the machine's memory.
 	mpl := msg.MaxPayloadLength(pver)
 	if uint64(hdr.length) > mpl || hdr.extLength > mpl {
 		discardInput(r, uint64(hdr.length))
@@ -487,7 +487,7 @@ func ReadMessageWithEncodingN(r io.Reader, pver uint32, bsvnet BitcoinNet, enc M
 		return totalBytes, nil, nil, err
 	}
 
-	// For extended format messages the checksum will be set to 0x00000000 and not checked by receivers.
+	// For extended format messages, the checksum will be set to 0x00000000 and not checked by receivers.
 	// This is due to the long time required to calculate and verify the checksum for very large
 	// data sets, and the limited utility of such a checksum.
 	if length != 0xffffffff && hdr.extLength == 0 {

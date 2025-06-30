@@ -6,6 +6,7 @@ package wire
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"reflect"
 	"testing"
@@ -35,7 +36,7 @@ func TestBlock(t *testing.T) {
 			cmd, wantCmd)
 	}
 
-	// Ensure max payload is expected value for latest protocol version.
+	// Ensure max payload is expected value for the latest protocol version.
 	// Num addresses (varInt) + max allowed addresses.
 	wantPayload := fixedExcessiveBlockSize
 	maxPayload := msg.MaxPayloadLength(pver)
@@ -256,7 +257,7 @@ func TestBlockWireErrors(t *testing.T) {
 		w := newFixedWriter(test.max)
 
 		err := test.in.BsvEncode(w, test.pver, test.enc)
-		if err != test.writeErr {
+		if !errors.Is(err, test.writeErr) {
 			t.Errorf("BsvEncode #%d wrong error got: %v, want: %v",
 				i, err, test.writeErr)
 			continue
@@ -268,7 +269,7 @@ func TestBlockWireErrors(t *testing.T) {
 		r := newFixedReader(test.max, test.buf)
 
 		err = msg.Bsvdecode(r, test.pver, test.enc)
-		if err != test.readErr {
+		if !errors.Is(err, test.readErr) {
 			t.Errorf("Bsvdecode #%d wrong error got: %v, want: %v",
 				i, err, test.readErr)
 			continue
@@ -388,7 +389,7 @@ func TestBlockSerializeErrors(t *testing.T) {
 		w := newFixedWriter(test.max)
 
 		err := test.in.Serialize(w)
-		if err != test.writeErr {
+		if !errors.Is(err, test.writeErr) {
 			t.Errorf("Serialize #%d wrong error got: %v, want: %v",
 				i, err, test.writeErr)
 			continue
@@ -400,7 +401,7 @@ func TestBlockSerializeErrors(t *testing.T) {
 		r := newFixedReader(test.max, test.buf)
 
 		err = block.Deserialize(r)
-		if err != test.readErr {
+		if !errors.Is(err, test.readErr) {
 			t.Errorf("Deserialize #%d wrong error got: %v, want: %v",
 				i, err, test.readErr)
 			continue
@@ -411,7 +412,7 @@ func TestBlockSerializeErrors(t *testing.T) {
 		br := bytes.NewBuffer(test.buf[0:test.max])
 
 		_, err = txLocBlock.DeserializeTxLoc(br)
-		if err != test.readErr {
+		if !errors.Is(err, test.readErr) {
 			t.Errorf("DeserializeTxLoc #%d wrong error got: %v, want: %v",
 				i, err, test.readErr)
 			continue
@@ -419,7 +420,7 @@ func TestBlockSerializeErrors(t *testing.T) {
 	}
 }
 
-// TestBlockOverflowErrors  performs tests to ensure deserializing blocks which
+// TestBlockOverflowErrors performs tests to ensure deserializing blocks which
 // are intentionally crafted to use large values for the number of transactions
 // are handled properly.  This could otherwise potentially be used as an attack
 // vector.
@@ -506,7 +507,7 @@ func TestBlockSerializeSize(t *testing.T) {
 		// Block with no transactions.
 		{noTxBlock, 81},
 
-		// First block in the mainnet block chain.
+		// First block in the mainnet blockchain.
 		{&blockOne, len(blockOneBytes)},
 	}
 
@@ -531,7 +532,7 @@ func TestBlockSerializeSize(t *testing.T) {
 // 	require.NoError(t, err)
 // }
 
-// blockOne is the first block in the mainnet block chain.
+// blockOne is the first block in the mainnet blockchain.
 var blockOne = MsgBlock{
 	Header: BlockHeader{
 		Version: 1,
@@ -590,7 +591,7 @@ var blockOne = MsgBlock{
 	},
 }
 
-// Block one serialized bytes.
+// Block one serialized byte.
 var blockOneBytes = []byte{
 	0x01, 0x00, 0x00, 0x00, // Version 1
 	0x6f, 0xe2, 0x8c, 0x0a, 0xb6, 0xf1, 0xb3, 0x72,
@@ -611,7 +612,7 @@ var blockOneBytes = []byte{
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Previous output hash
-	0xff, 0xff, 0xff, 0xff, // Prevous output index
+	0xff, 0xff, 0xff, 0xff, // Previous output index
 	0x07,                                     // Varint for length of signature script
 	0x04, 0xff, 0xff, 0x00, 0x1d, 0x01, 0x04, // Signature script (coinbase)
 	0xff, 0xff, 0xff, 0xff, // Sequence

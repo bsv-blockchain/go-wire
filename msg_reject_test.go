@@ -6,6 +6,7 @@ package wire
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"reflect"
 	"testing"
@@ -79,8 +80,8 @@ func TestRejectLatest(t *testing.T) {
 			cmd, wantCmd)
 	}
 
-	// Ensure max payload is expected value for latest protocol version.
-	wantPayload := uint64(maxMessagePayload())
+	// Ensure max payload is expected value for the latest protocol version.
+	wantPayload := maxMessagePayload()
 	maxPayload := msg.MaxPayloadLength(pver)
 
 	if maxPayload != wantPayload {
@@ -144,14 +145,14 @@ func TestRejectBeforeAdded(t *testing.T) {
 	msg := NewMsgReject(rejCommand, rejCode, rejReason)
 	msg.Hash = rejHash
 
-	// Ensure max payload is expected value for old protocol version.
+	// Ensure max payload is expected value for an old protocol version.
 	size := msg.MaxPayloadLength(pver)
 	if size != 0 {
 		t.Errorf("Max length should be 0 for reject protocol version %d.",
 			pver)
 	}
 
-	// Test encode with old protocol version.
+	// Test encode with an old protocol version.
 	var buf bytes.Buffer
 
 	err := msg.BsvEncode(&buf, pver, enc)
@@ -160,7 +161,7 @@ func TestRejectBeforeAdded(t *testing.T) {
 			"have %v", msg)
 	}
 
-	//	// Test decode with old protocol version.
+	//	// Test decode with an old protocol version.
 	readMsg := MsgReject{}
 
 	err = readMsg.Bsvdecode(&buf, pver, enc)
@@ -205,7 +206,7 @@ func TestRejectCrossProtocol(t *testing.T) {
 	msg := NewMsgReject(rejCommand, rejCode, rejReason)
 	msg.Hash = rejHash
 
-	// Encode with latest protocol version.
+	// Encode with the latest protocol version.
 	var buf bytes.Buffer
 
 	err := msg.BsvEncode(&buf, ProtocolVersion, BaseEncoding)
@@ -213,7 +214,7 @@ func TestRejectCrossProtocol(t *testing.T) {
 		t.Errorf("encode of MsgReject failed %v err <%v>", msg, err)
 	}
 
-	// Decode with old protocol version.
+	// Decode with an old protocol version.
 	readMsg := MsgReject{}
 
 	err = readMsg.Bsvdecode(&buf, RejectVersion-1, BaseEncoding)
@@ -251,7 +252,7 @@ func TestRejectWire(t *testing.T) {
 		pver uint32          // Protocol version for wire encoding
 		enc  MessageEncoding // Message encoding format
 	}{
-		// Latest protocol version rejected command version (no hash).
+		// The Latest protocol version rejected a command version (no hash).
 		{
 			MsgReject{
 				Cmd:    "version",
@@ -385,8 +386,9 @@ func TestRejectWireErrors(t *testing.T) {
 
 		// For errors which are not of type MessageError, check them for
 		// equality.
-		if _, ok := err.(*MessageError); !ok {
-			if err != test.writeErr {
+		var msgError *MessageError
+		if !errors.As(err, &msgError) {
+			if !errors.Is(err, test.writeErr) {
 				t.Errorf("BsvEncode #%d wrong error got: %v, "+
 					"want: %v", i, err, test.writeErr)
 				continue
@@ -407,8 +409,8 @@ func TestRejectWireErrors(t *testing.T) {
 
 		// For errors which are not of type MessageError, check them for
 		// equality.
-		if _, ok := err.(*MessageError); !ok {
-			if err != test.readErr {
+		if !errors.As(err, &msgError) {
+			if !errors.Is(err, test.readErr) {
 				t.Errorf("Bsvdecode #%d wrong error got: %v, "+
 					"want: %v", i, err, test.readErr)
 				continue

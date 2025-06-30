@@ -20,16 +20,16 @@ const MaxBlockHeaderPayload = 16 + (chainhash.HashSize * 2)
 // BlockHeader defines information about a block and is used in the bitcoin
 // block (MsgBlock) and headers (MsgHeaders) messages.
 type BlockHeader struct {
-	// Version of the block.  This is not the same as the protocol version.
+	// Version of the block.  This is different from the protocol version.
 	Version int32
 
-	// Hash of the previous block header in the block chain.
+	// Hash of the previous block header in the blockchain.
 	PrevBlock chainhash.Hash
 
 	// Merkle tree reference to hash of all transactions for the block.
 	MerkleRoot chainhash.Hash
 
-	// Time the block was created.  This is, unfortunately, encoded as a
+	// Time the block was created.  This is, unfortunately, encoded as an
 	// uint32 on the wire and therefore is limited to 2106.
 	Timestamp time.Time
 
@@ -51,7 +51,7 @@ func (h *BlockHeader) BlockHash() chainhash.Hash {
 	// encode could fail except being out of memory which would cause a
 	// run-time panic.
 	buf := bytes.NewBuffer(make([]byte, 0, MaxBlockHeaderPayload))
-	writeBlockHeader(buf, 0, h)
+	_ = writeBlockHeader(buf, 0, h)
 
 	return chainhash.DoubleHashH(buf.Bytes())
 }
@@ -60,7 +60,7 @@ func (h *BlockHeader) BlockHash() chainhash.Hash {
 // This is part of the Message interface implementation.
 // See Deserialize for decoding block headers stored to disk, such as in a
 // database, as opposed to decoding block headers from the wire.
-func (h *BlockHeader) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) error {
+func (h *BlockHeader) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding) error {
 	return readBlockHeader(r, pver, h)
 }
 
@@ -68,7 +68,7 @@ func (h *BlockHeader) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) e
 // This is part of the Message interface implementation.
 // See Serialize for encoding block headers to be stored to disk, such as in a
 // database, as opposed to encoding block headers for the wire.
-func (h *BlockHeader) BsvEncode(w io.Writer, pver uint32, enc MessageEncoding) error {
+func (h *BlockHeader) BsvEncode(w io.Writer, pver uint32, _ MessageEncoding) error {
 	return writeBlockHeader(w, pver, h)
 }
 
@@ -109,10 +109,10 @@ func NewBlockHeader(version int32, prevHash, merkleRootHash *chainhash.Hash,
 	}
 }
 
-// readBlockHeader reads a bitcoin block header from r.  See Deserialize for
+// readBlockHeader reads a bitcoin block header from r. See Deserialize for
 // decoding block headers stored to disk, such as in a database, as opposed to
 // decoding from the wire.
-func readBlockHeader(r io.Reader, pver uint32, bh *BlockHeader) error {
+func readBlockHeader(r io.Reader, _ uint32, bh *BlockHeader) error {
 	return readElements(r, &bh.Version, &bh.PrevBlock, &bh.MerkleRoot,
 		(*uint32Time)(&bh.Timestamp), &bh.Bits, &bh.Nonce)
 }
@@ -120,7 +120,7 @@ func readBlockHeader(r io.Reader, pver uint32, bh *BlockHeader) error {
 // writeBlockHeader writes a bitcoin block header to w.  See Serialize for
 // encoding block headers to be stored to disk, such as in a database, as
 // opposed to encoding for the wire.
-func writeBlockHeader(w io.Writer, pver uint32, bh *BlockHeader) error {
+func writeBlockHeader(w io.Writer, _ uint32, bh *BlockHeader) error {
 	sec := uint32(bh.Timestamp.Unix())
 	return writeElements(w, bh.Version, &bh.PrevBlock, &bh.MerkleRoot,
 		sec, bh.Bits, bh.Nonce)

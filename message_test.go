@@ -7,6 +7,7 @@ package wire
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"io"
 	"net"
 	"reflect"
@@ -26,7 +27,7 @@ func makeHeader(bsvnet BitcoinNet, command string,
 	// payload length + 4 byte checksum.
 	buf := make([]byte, 24)
 	binary.LittleEndian.PutUint32(buf, uint32(bsvnet))
-	copy(buf[4:], []byte(command))
+	copy(buf[4:], command)
 	binary.LittleEndian.PutUint32(buf[16:], payloadLen)
 	binary.LittleEndian.PutUint32(buf[20:], checksum)
 
@@ -224,7 +225,7 @@ func TestReadMessageWireErrors(t *testing.T) {
 
 	// Wire encoded bytes for a message which has a valid header, but is
 	// the wrong format.  An addr starts with a varint of the number of
-	// contained in the message.  Claim there is two, but don't provide
+	// contained in the message.  Claim there are two, but don't provide
 	// them.  At the same time, forge the header fields so the message is
 	// otherwise accurate.
 	badMessageBytes := makeHeader(bsvnet, "addr", 1, 0xeaadc31c)
@@ -366,8 +367,9 @@ func TestReadMessageWireErrors(t *testing.T) {
 
 		// For errors which are not of type MessageError, check them for
 		// equality.
-		if _, ok := err.(*MessageError); !ok {
-			if err != test.readErr {
+		var msgError *MessageError
+		if !errors.As(err, &msgError) {
+			if !errors.Is(err, test.readErr) {
 				t.Errorf("ReadMessage #%d wrong error got: %v <%T>, "+
 					"want: %v <%T>", i, err, err,
 					test.readErr, test.readErr)
@@ -395,7 +397,7 @@ func TestWriteMessageWireErrors(t *testing.T) {
 	exceedOverallPayload := make([]byte, maxMessagePayload()+1)
 	exceedOverallPayloadErrMsg := &fakeMessage{payload: exceedOverallPayload}
 
-	// Fake message that has payload which exceeds max allowed per message.
+	// Fake message that has payload which exceeds the max allowed per message.
 	exceedPayload := make([]byte, 1)
 	exceedPayloadErrMsg := &fakeMessage{payload: exceedPayload, forceLenErr: true}
 
@@ -422,7 +424,7 @@ func TestWriteMessageWireErrors(t *testing.T) {
 		{exceedPayloadErrMsg, pver, bsvnet, 0, wireErr, 0},
 		// Force error in header write.
 		{bogusMsg, pver, bsvnet, 0, io.ErrShortWrite, 0},
-		// Force error in payload write.
+		// Force error in payload writes.
 		{bogusMsg, pver, bsvnet, 28, nil, 28},
 	}
 
@@ -447,8 +449,9 @@ func TestWriteMessageWireErrors(t *testing.T) {
 
 		// For errors which are not of type MessageError, check them for
 		// equality.
-		if _, ok := err.(*MessageError); !ok {
-			if err != test.err {
+		var msgError *MessageError
+		if !errors.As(err, &msgError) {
+			if !errors.Is(err, test.err) {
 				t.Errorf("ReadMessage #%d wrong error got: %v <%T>, "+
 					"want: %v <%T>", i, err, err,
 					test.err, test.err)

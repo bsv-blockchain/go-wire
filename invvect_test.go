@@ -241,10 +241,9 @@ func TestInvVectWire(t *testing.T) {
 	t.Logf("Running %d tests", len(tests))
 
 	for i, test := range tests {
-		test := test
 		// Encode to wire format.
 		var buf bytes.Buffer
-		err := writeInvVect(&buf, test.pver, &test.in)
+		err = writeInvVect(&buf, test.pver, &test.in)
 
 		if err != nil {
 			t.Errorf("writeInvVect #%d error %v", i, err)

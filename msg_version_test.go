@@ -6,6 +6,7 @@ package wire
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"net"
 	"reflect"
@@ -14,6 +15,7 @@ import (
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/stretchr/testify/require"
 )
 
 // TestVersion tests the MsgVersion API.
@@ -69,7 +71,8 @@ func TestVersion(t *testing.T) {
 			"default - got %v, want %v", msg.DisableRelayTx, false)
 	}
 
-	msg.AddUserAgent("myclient", "1.2.3", "optional", "comments")
+	err = msg.AddUserAgent("myclient", "1.2.3", "optional", "comments")
+	require.NoError(t, err)
 
 	customUserAgent := "myclient:1.2.3(optional; comments)/"
 	if msg.UserAgent != customUserAgent {
@@ -77,7 +80,8 @@ func TestVersion(t *testing.T) {
 			msg.UserAgent, customUserAgent)
 	}
 
-	msg.AddUserAgent(msg.UserAgent+"mygui", "3.4.5")
+	err = msg.AddUserAgent(msg.UserAgent+"mygui", "3.4.5")
+	require.NoError(t, err)
 
 	customUserAgent += "mygui:3.4.5/"
 	if msg.UserAgent != customUserAgent {
@@ -88,7 +92,8 @@ func TestVersion(t *testing.T) {
 	// accounting for ":", "/"
 	err = msg.AddUserAgent(strings.Repeat("t",
 		MaxUserAgentLen+1), "")
-	if _, ok := err.(*MessageError); !ok {
+	var msgError *MessageError
+	if !errors.As(err, &msgError) {
 		t.Errorf("AddUserAgent: expected error not received "+
 			"- got %v, want %T", err, MessageError{})
 	}
@@ -113,7 +118,7 @@ func TestVersion(t *testing.T) {
 	// Ensure max payload is expected value.
 	// Protocol version 4 bytes + services 8 bytes + timestamp 8 bytes +
 	// remote and local net addresses + nonce 8 bytes + length of user agent
-	// (varInt) + max allowed user agent length + last block 4 bytes +
+	// (varInt) + max allowed user agent length and last block 4 bytes +
 	// relay transactions flag 1 byte.
 	wantPayload := uint64(358)
 	maxPayload := msg.MaxPayloadLength(pver)
@@ -140,7 +145,7 @@ func TestVersion(t *testing.T) {
 // TestVersionWire tests the MsgVersion wire encode and decode for various
 // protocol versions.
 func TestVersionWire(t *testing.T) {
-	// verRelayTxFalse and verRelayTxFalseEncoded is a version message as of
+	// verRelayTxFalse and verRelayTxFalseEncoded are a version message as of
 	// BIP0037Version with the transaction relay disabled.
 	baseVersionBIP0037Copy := *baseVersionBIP0037
 	verRelayTxFalse := &baseVersionBIP0037Copy
@@ -293,13 +298,13 @@ func TestVersionWireErrors(t *testing.T) {
 
 	// Make a new buffer big enough to hold the base version plus the new
 	// bytes for the bigger varint to hold the new size of the user agent
-	// and the new user agent string.  Then stich it all together.
+	// and the new user agent string.  Then stitch it all together.
 	newLen := len(baseVersionEncoded) - len(baseVersion.UserAgent)
 	newLen = newLen + len(newUAVarIntBuf.Bytes()) - 1 + len(newUA)
 	exceedUAVerEncoded := make([]byte, newLen)
 	copy(exceedUAVerEncoded, baseVersionEncoded[0:80])
 	copy(exceedUAVerEncoded[80:], newUAVarIntBuf.Bytes())
-	copy(exceedUAVerEncoded[83:], []byte(newUA))
+	copy(exceedUAVerEncoded[83:], newUA)
 	copy(exceedUAVerEncoded[83+len(newUA):], baseVersionEncoded[97:100])
 
 	tests := []struct {
@@ -327,7 +332,7 @@ func TestVersionWireErrors(t *testing.T) {
 		{baseVersion, baseVersionEncoded, pver, BaseEncoding, 81, io.ErrShortWrite, io.EOF},
 		// Force error in user agent.
 		{baseVersion, baseVersionEncoded, pver, BaseEncoding, 82, io.ErrShortWrite, io.ErrUnexpectedEOF},
-		// Force error in last block.
+		// Force error in the last block.
 		{baseVersion, baseVersionEncoded, pver, BaseEncoding, 98, io.ErrShortWrite, io.ErrUnexpectedEOF},
 		// Force error in relay tx - no read error should happen since
 		// it's optional.
@@ -345,7 +350,7 @@ func TestVersionWireErrors(t *testing.T) {
 		// Encode to wire format.
 		w := newFixedWriter(test.max)
 
-		err := test.in.BsvEncode(w, test.pver, test.enc)
+		err = test.in.BsvEncode(w, test.pver, test.enc)
 		if reflect.TypeOf(err) != reflect.TypeOf(test.writeErr) {
 			t.Errorf("BsvEncode #%d wrong error got: %v, want: %v",
 				i, err, test.writeErr)
@@ -354,8 +359,9 @@ func TestVersionWireErrors(t *testing.T) {
 
 		// For errors which are not of type MessageError, check them for
 		// equality.
-		if _, ok := err.(*MessageError); !ok {
-			if err != test.writeErr {
+		var msgError *MessageError
+		if !errors.As(err, &msgError) {
+			if !errors.Is(err, test.writeErr) {
 				t.Errorf("BsvEncode #%d wrong error got: %v, "+
 					"want: %v", i, err, test.writeErr)
 				continue
@@ -376,8 +382,8 @@ func TestVersionWireErrors(t *testing.T) {
 
 		// For errors which are not of type MessageError, check them for
 		// equality.
-		if _, ok := err.(*MessageError); !ok {
-			if err != test.readErr {
+		if !errors.As(err, &msgError) {
+			if !errors.Is(test.readErr, err) {
 				t.Errorf("Bsvdecode #%d wrong error got: %v, "+
 					"want: %v", i, err, test.readErr)
 				continue

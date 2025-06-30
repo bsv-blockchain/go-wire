@@ -75,9 +75,9 @@ func (msg *MsgBlock) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) er
 	}
 
 	// Prevent more transactions than could possibly fit into a block.
-	// It would be possible to cause memory exhaustion and panics without
+	// It would be possible to cause memory exhaustion and panic without
 	// a sane upper bound on this count.
-	if txCount > uint64(maxTxPerBlock()) {
+	if txCount > maxTxPerBlock() {
 		str := fmt.Sprintf("too many transactions to fit into a block "+
 			"[count %d, max %d]", txCount, maxTxPerBlock())
 		return messageError("MsgBlock.Bsvdecode", str)
@@ -136,9 +136,9 @@ func (msg *MsgBlock) DeserializeTxLoc(r *bytes.Buffer) ([]TxLoc, error) {
 	}
 
 	// Prevent more transactions than could possibly fit into a block.
-	// It would be possible to cause memory exhaustion and panics without
+	// It would be possible to cause memory exhaustion and panic without
 	// a sane upper bound on this count.
-	if txCount > uint64(maxTxPerBlock()) {
+	if txCount > maxTxPerBlock() {
 		str := fmt.Sprintf("too many transactions to fit into a block "+
 			"[count %d, max %d]", txCount, maxTxPerBlock())
 		return nil, messageError("MsgBlock.DeserializeTxLoc", str)
@@ -193,7 +193,7 @@ func (msg *MsgBlock) BsvEncode(w io.Writer, pver uint32, enc MessageEncoding) er
 // Serialize encodes the block to w using a format that suitable for long-term
 // storage such as a database while respecting the Version field in the block.
 // This function differs from BsvEncode in that BsvEncode encodes the block to
-// the bitcoin wire protocol in order to be sent across the network.  The wire
+// the bitcoin wire protocol to be sent across the network.  The wire
 // encoding can technically differ depending on the protocol version and doesn't
 // even really need to match the format of a stored block at all.  As of the
 // time this comment was written, the encoded block is the same in both
@@ -209,7 +209,7 @@ func (msg *MsgBlock) Serialize(w io.Writer) error {
 // SerializeSize returns the number of bytes it would take to serialize the
 // block, factoring in any witness data within transaction.
 func (msg *MsgBlock) SerializeSize() int {
-	// Block header bytes + Serialized varint size for the number of
+	// Block header bytes and Serialized varint size for the number of
 	// transactions.
 	n := blockHeaderLen + VarIntSerializeSize(uint64(len(msg.Transactions)))
 
@@ -228,7 +228,7 @@ func (msg *MsgBlock) Command() string {
 
 // MaxPayloadLength returns the maximum length the payload can be for the
 // receiver.  This is part of the Message interface implementation.
-func (msg *MsgBlock) MaxPayloadLength(pver uint32) uint64 {
+func (msg *MsgBlock) MaxPayloadLength(_ uint32) uint64 {
 	// Block header at 80 bytes + transaction count + max transactions
 	// which can vary up to the MaxBlockPayload (including the block header
 	// and transaction count).
@@ -240,7 +240,7 @@ func (msg *MsgBlock) BlockHash() chainhash.Hash {
 	return msg.Header.BlockHash()
 }
 
-// TxHashes returns a slice of hashes of all of transactions in this block.
+// TxHashes returns a slice of hashes of all the transactions in this block.
 func (msg *MsgBlock) TxHashes() ([]chainhash.Hash, error) {
 	hashList := make([]chainhash.Hash, 0, len(msg.Transactions))
 	for _, tx := range msg.Transactions {

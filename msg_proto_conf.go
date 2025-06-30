@@ -15,7 +15,6 @@ import (
 // MsgProtoconf implements the Message interface and represents a bitcoin
 // protoconf message.  It is sent after verack message directly to inform
 // max receive payload length
-
 const (
 	MaxProtoconfPayload       = 1024 * 1024
 	MaxNumStreamPolicies      = 10
@@ -27,9 +26,12 @@ const (
 	// Default Value: DEFAULT_MAX_PROTOCOL_RECV_PAYLOAD_LENGTH which is 2MB (2 * 1024 * 1024 bytes)
 	// Legacy Value: LEGACY_MAX_PROTOCOL_PAYLOAD_LENGTH which is 1MB (1 * 1024 * 1024 bytes)
 	// Maximum Allowed Value: MAX_PROTOCOL_RECV_PAYLOAD_LENGTH which is 1GB (ONE_GIGABYTE)
+
+	// DefaultMaxRecvPayloadLength is the default maximum receive payload length
 	DefaultMaxRecvPayloadLength uint32 = 2 * 1024 * 1024
 )
 
+// MsgProtoconf is a message that is sent by the server to the client
 type MsgProtoconf struct {
 	NumberOfFields       uint64
 	MaxRecvPayloadLength uint32
@@ -61,7 +63,7 @@ func NewMsgProtoconf(maxRecvPayloadLength uint32, allowBlockPriority bool) *MsgP
 
 // Bsvdecode decodes r using the bitcoin protocol encoding into the receiver.
 // This is part of the Message interface implementation.
-func (msg *MsgProtoconf) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) error {
+func (msg *MsgProtoconf) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding) error {
 	if pver < ProtoconfVersion {
 		str := fmt.Sprintf("protoconf message invalid for protocol version %d", pver)
 		return messageError("MsgProtoconf.Bsvdecode", str)
@@ -105,13 +107,13 @@ func (msg *MsgProtoconf) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding
 
 // BsvEncode encodes the receiver to w using the bitcoin protocol encoding.
 // This is part of the Message interface implementation.
-func (msg *MsgProtoconf) BsvEncode(w io.Writer, pver uint32, enc MessageEncoding) error {
+func (msg *MsgProtoconf) BsvEncode(w io.Writer, pver uint32, _ MessageEncoding) error {
 	if pver < ProtoconfVersion {
 		str := fmt.Sprintf("protoconf message invalid for protocol version %d", pver)
 		return messageError("MsgProtoconf.BsvEncode", str)
 	}
 
-	// First write the number of fields as a varint. At the moment, this is always 2 and will write 1 byte (0x02)
+	// First, write the number of fields as a varint. At the moment, this is always 2 and will write 1 byte (0x02)
 	if _, err := w.Write(bt.VarInt(msg.NumberOfFields).Bytes()); err != nil {
 		return err
 	}
@@ -141,7 +143,7 @@ func (msg *MsgProtoconf) Command() string {
 
 // MaxPayloadLength returns the maximum length the payload can be for the
 // receiver.  This is part of the Message interface implementation.
-func (msg *MsgProtoconf) MaxPayloadLength(pver uint32) uint64 {
+func (msg *MsgProtoconf) MaxPayloadLength(_ uint32) uint64 {
 	// The protoconf message itself, which is limited to 1.048.576 bytes.
 	return MaxProtoconfPayload
 }

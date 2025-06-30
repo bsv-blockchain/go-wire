@@ -1,9 +1,15 @@
+// Package main provides an example of how to write a bitcoin message
+// using the go-wire package. It creates a getaddr message and writes it
+// to a buffered writer, which in this case is stdout. The example uses
+// the main bitcoin network and the most recent protocol version supported
+// by the package.
 package main
 
 import (
 	"bufio"
-	"github.com/bsv-blockchain/go-wire"
 	"os"
+
+	"github.com/bsv-blockchain/go-wire"
 )
 
 func main() {

@@ -6,11 +6,13 @@ package wire
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"reflect"
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/stretchr/testify/require"
 )
 
 // TestHeaders tests the MsgHeaders API.
@@ -26,7 +28,7 @@ func TestHeaders(t *testing.T) {
 			cmd, wantCmd)
 	}
 
-	// Ensure max payload is expected value for latest protocol version.
+	// Ensure max payload is expected value for a latest protocol version.
 	// Num headers (varInt) + max allowed headers (header length + 1 byte
 	// for the number of transactions which is always 0).
 	wantPayload := uint64(162009)
@@ -40,7 +42,8 @@ func TestHeaders(t *testing.T) {
 
 	// Ensure headers are added properly.
 	bh := &blockOne.Header
-	msg.AddBlockHeader(bh)
+	err := msg.AddBlockHeader(bh)
+	require.NoError(t, err)
 
 	if !reflect.DeepEqual(msg.Headers[0], bh) {
 		t.Errorf("AddHeader: wrong header - got %v, want %v",
@@ -50,7 +53,6 @@ func TestHeaders(t *testing.T) {
 
 	// Ensure adding more than the max allowed headers per message returns
 	// error.
-	var err error
 	for i := 0; i < MaxBlockHeadersPerMsg+1; i++ {
 		err = msg.AddBlockHeader(bh)
 	}
@@ -80,7 +82,8 @@ func TestHeadersWire(t *testing.T) {
 
 	// Headers message with one header.
 	oneHeader := NewMsgHeaders()
-	oneHeader.AddBlockHeader(bh)
+	err := oneHeader.AddBlockHeader(bh)
+	require.NoError(t, err)
 
 	oneHeaderEncoded := []byte{
 		0x01,                   // VarInt for number of headers.
@@ -96,7 +99,7 @@ func TestHeadersWire(t *testing.T) {
 		0x61, 0xbc, 0x66, 0x49, // Timestamp
 		0xff, 0xff, 0x00, 0x1d, // Bits
 		0x01, 0xe3, 0x62, 0x99, // Nonce
-		0x00, // TxnCount (0 for headers message)
+		0x00, // TxnCount (0 for header message)
 	}
 
 	tests := []struct {
@@ -249,7 +252,8 @@ func TestHeadersWireErrors(t *testing.T) {
 
 	// Headers message with one header.
 	oneHeader := NewMsgHeaders()
-	oneHeader.AddBlockHeader(bh)
+	err := oneHeader.AddBlockHeader(bh)
+	require.NoError(t, err)
 
 	oneHeaderEncoded := []byte{
 		0x01,                   // VarInt for number of headers.
@@ -265,14 +269,15 @@ func TestHeadersWireErrors(t *testing.T) {
 		0x61, 0xbc, 0x66, 0x49, // Timestamp
 		0xff, 0xff, 0x00, 0x1d, // Bits
 		0x01, 0xe3, 0x62, 0x99, // Nonce
-		0x00, // TxnCount (0 for headers message)
+		0x00, // TxnCount (0 for a header message)
 	}
 
 	// Message that forces an error by having more than the max allowed
 	// headers.
 	maxHeaders := NewMsgHeaders()
 	for i := 0; i < MaxBlockHeadersPerMsg; i++ {
-		maxHeaders.AddBlockHeader(bh)
+		err = maxHeaders.AddBlockHeader(bh)
+		require.NoError(t, err)
 	}
 
 	maxHeaders.Headers = append(maxHeaders.Headers, bh)
@@ -287,7 +292,8 @@ func TestHeadersWireErrors(t *testing.T) {
 	bhTrans.Timestamp = blockOne.Header.Timestamp
 
 	transHeader := NewMsgHeaders()
-	transHeader.AddBlockHeader(bhTrans)
+	err = transHeader.AddBlockHeader(bhTrans)
+	require.NoError(t, err)
 
 	transHeaderEncoded := []byte{
 		0x01,                   // VarInt for number of headers.
@@ -303,7 +309,7 @@ func TestHeadersWireErrors(t *testing.T) {
 		0x61, 0xbc, 0x66, 0x49, // Timestamp
 		0xff, 0xff, 0x00, 0x1d, // Bits
 		0x01, 0xe3, 0x62, 0x99, // Nonce
-		0x01, // TxnCount (should be 0 for headers message, but 1 to force error)
+		0x01, // TxnCount (should be 0 for a header message, but 1 to force error)
 	}
 
 	tests := []struct {
@@ -334,7 +340,7 @@ func TestHeadersWireErrors(t *testing.T) {
 		// Encode to wire format.
 		w := newFixedWriter(test.max)
 
-		err := test.in.BsvEncode(w, test.pver, test.enc)
+		err = test.in.BsvEncode(w, test.pver, test.enc)
 		if reflect.TypeOf(err) != reflect.TypeOf(test.writeErr) {
 			t.Errorf("BsvEncode #%d wrong error got: %v, want: %v",
 				i, err, test.writeErr)
@@ -343,8 +349,9 @@ func TestHeadersWireErrors(t *testing.T) {
 
 		// For errors which are not of type MessageError, check them for
 		// equality.
-		if _, ok := err.(*MessageError); !ok {
-			if err != test.writeErr {
+		var msgError *MessageError
+		if !errors.As(err, &msgError) {
+			if !errors.Is(err, test.writeErr) {
 				t.Errorf("BsvEncode #%d wrong error got: %v, "+
 					"want: %v", i, err, test.writeErr)
 				continue
@@ -365,8 +372,8 @@ func TestHeadersWireErrors(t *testing.T) {
 
 		// For errors which are not of type MessageError, check them for
 		// equality.
-		if _, ok := err.(*MessageError); !ok {
-			if err != test.readErr {
+		if !errors.As(err, &msgError) {
+			if !errors.Is(test.readErr, err) {
 				t.Errorf("Bsvdecode #%d wrong error got: %v, "+
 					"want: %v", i, err, test.readErr)
 				continue

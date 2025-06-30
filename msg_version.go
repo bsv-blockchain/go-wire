@@ -42,11 +42,10 @@ type MsgVersion struct {
 	// Address of the local peer.
 	AddrMe NetAddress
 
-	// Unique value associated with message that is used to detect self
-	// connections.
+	// Unique value associated with a message that is used to detect self-connections.
 	Nonce uint64
 
-	// The user agent that generated messsage.  This is a encoded as a varString
+	// The user agent that generated the message.  This is encoded as a varString
 	// on the wire.  This has a max length of MaxUserAgentLen.
 	UserAgent string
 
@@ -71,14 +70,15 @@ func (msg *MsgVersion) AddService(service ServiceFlag) {
 
 // Bsvdecode decodes r using the bitcoin protocol encoding into the receiver.
 // The version message is special in that the protocol version hasn't been
-// negotiated yet.  As a result, the pver field is ignored and any fields which
-// are added in new versions are optional.  This also mean that r must be a
-// *bytes.Buffer so the number of remaining bytes can be ascertained.
+// negotiated yet.  As a result, the pver field is ignored and any fields that
+// are added in new versions are optional.  This also means that r must be a
+// *bytes.Buffer so the number of remaining bytes can be figured out.
 //
 // This is part of the Message interface implementation.
-func (msg *MsgVersion) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) error {
+func (msg *MsgVersion) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding) error {
 	buf, ok := r.(*bytes.Buffer)
 	if !ok {
+		//nolint:err113 // needs refactoring
 		return fmt.Errorf("MsgVersion.Bsvdecode reader is not a " +
 			"*bytes.Buffer")
 	}
@@ -95,7 +95,7 @@ func (msg *MsgVersion) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) 
 	}
 
 	// Protocol versions >= 106 added a from address, nonce, and user agent
-	// field and they are only considered present if there are bytes
+	// field, and they are only considered present if there are bytes
 	// remaining in the message.
 	if buf.Len() > 0 {
 		err = readNetAddress(buf, pver, &msg.AddrMe, false)
@@ -140,13 +140,13 @@ func (msg *MsgVersion) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) 
 	// relay transactions.
 	if buf.Len() > 0 {
 		// It's safe to ignore the error here since the buffer has at
-		// least one byte and that byte will result in a boolean value
+		// least one byte, and that byte will result in a boolean value
 		// regardless of its value.  Also, the wire encoding for the
 		// field is true when transactions should be relayed, so reverse
 		// it for the DisableRelayTx field.
 		var relayTx bool
 
-		readElement(r, &relayTx)
+		_ = readElement(r, &relayTx)
 		msg.DisableRelayTx = !relayTx
 	}
 
@@ -155,7 +155,7 @@ func (msg *MsgVersion) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) 
 
 // BsvEncode encodes the receiver to w using the bitcoin protocol encoding.
 // This is part of the Message interface implementation.
-func (msg *MsgVersion) BsvEncode(w io.Writer, pver uint32, enc MessageEncoding) error {
+func (msg *MsgVersion) BsvEncode(w io.Writer, pver uint32, _ MessageEncoding) error {
 	err := validateUserAgent(msg.UserAgent)
 	if err != nil {
 		return err

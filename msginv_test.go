@@ -6,12 +6,14 @@ package wire
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"reflect"
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/libsv/go-bt/v2/chainhash"
+	"github.com/stretchr/testify/require"
 )
 
 // TestInv tests the MsgInv API.
@@ -27,7 +29,7 @@ func TestInv(t *testing.T) {
 			cmd, wantCmd)
 	}
 
-	// Ensure max payload is expected value for latest protocol version.
+	// Ensure max payload is expected value for a latest protocol version.
 	// Num inventory vectors (varInt) + max allowed inventory vectors.
 	wantPayload := uint64(1800009)
 	maxPayload := msg.MaxPayloadLength(pver)
@@ -104,8 +106,11 @@ func TestInvWire(t *testing.T) {
 
 	// Inv message with multiple inventory vectors.
 	MultiInv := NewMsgInv()
-	MultiInv.AddInvVect(iv)
-	MultiInv.AddInvVect(iv2)
+	err = MultiInv.AddInvVect(iv)
+	require.NoError(t, err)
+
+	err = MultiInv.AddInvVect(iv2)
+	require.NoError(t, err)
 
 	MultiInvEncoded := []byte{
 		0x02,                   // Varint for number of inv vectors
@@ -126,7 +131,7 @@ func TestInvWire(t *testing.T) {
 		out  *MsgInv         // Expected decoded message
 		buf  []byte          // Wire encoding pver uint32
 		pver uint32          // Protocol version for wire encoding
-		enc  MessageEncoding // Message encodinf format
+		enc  MessageEncoding // Message encoding format
 	}{
 		// Latest protocol version with no inv vectors.
 		{
@@ -274,7 +279,8 @@ func TestInvWireErrors(t *testing.T) {
 
 	// Base inv message used to induce errors.
 	baseInv := NewMsgInv()
-	baseInv.AddInvVect(iv)
+	err = baseInv.AddInvVect(iv)
+	require.NoError(t, err)
 
 	baseInvEncoded := []byte{
 		0x02,                   // Varint for number of inv vectors
@@ -289,7 +295,8 @@ func TestInvWireErrors(t *testing.T) {
 	// inv vectors.
 	maxInv := NewMsgInv()
 	for i := 0; i < MaxInvPerMsg; i++ {
-		maxInv.AddInvVect(iv)
+		err = maxInv.AddInvVect(iv)
+		require.NoError(t, err)
 	}
 
 	maxInv.InvList = append(maxInv.InvList, iv)
@@ -309,7 +316,7 @@ func TestInvWireErrors(t *testing.T) {
 		// Latest protocol version with intentional read/write errors.
 		// Force error in inventory vector count
 		{baseInv, baseInvEncoded, pver, BaseEncoding, 0, io.ErrShortWrite, io.EOF},
-		// Force error in inventory list.
+		// Force error in an inventory list.
 		{baseInv, baseInvEncoded, pver, BaseEncoding, 1, io.ErrShortWrite, io.EOF},
 		// Force error with greater than max inventory vectors.
 		{maxInv, maxInvEncoded, pver, BaseEncoding, 3, wireErr, wireErr},
@@ -321,7 +328,7 @@ func TestInvWireErrors(t *testing.T) {
 		// Encode to wire format.
 		w := newFixedWriter(test.max)
 
-		err := test.in.BsvEncode(w, test.pver, test.enc)
+		err = test.in.BsvEncode(w, test.pver, test.enc)
 		if reflect.TypeOf(err) != reflect.TypeOf(test.writeErr) {
 			t.Errorf("BsvEncode #%d wrong error got: %v, want: %v",
 				i, err, test.writeErr)
@@ -330,8 +337,9 @@ func TestInvWireErrors(t *testing.T) {
 
 		// For errors which are not of type MessageError, check them for
 		// equality.
-		if _, ok := err.(*MessageError); !ok {
-			if err != test.writeErr {
+		var msgError *MessageError
+		if !errors.As(err, &msgError) {
+			if !errors.Is(err, test.writeErr) {
 				t.Errorf("BsvEncode #%d wrong error got: %v, "+
 					"want: %v", i, err, test.writeErr)
 				continue
@@ -352,8 +360,8 @@ func TestInvWireErrors(t *testing.T) {
 
 		// For errors which are not of type MessageError, check them for
 		// equality.
-		if _, ok := err.(*MessageError); !ok {
-			if err != test.readErr {
+		if !errors.As(err, &msgError) {
+			if !errors.Is(err, test.readErr) {
 				t.Errorf("Bsvdecode #%d wrong error got: %v, "+
 					"want: %v", i, err, test.readErr)
 				continue

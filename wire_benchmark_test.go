@@ -69,7 +69,7 @@ func BenchmarkWriteVarInt1(b *testing.B) {
 }
 
 // BenchmarkWriteVarInt3 performs a benchmark on how long it takes to write
-// a three byte variable length integer.
+// a three-byte variable length integer.
 func BenchmarkWriteVarInt3(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_ = WriteVarInt(io.Discard, 0, 65535)
@@ -77,7 +77,7 @@ func BenchmarkWriteVarInt3(b *testing.B) {
 }
 
 // BenchmarkWriteVarInt5 performs a benchmark on how long it takes to write
-// a five byte variable length integer.
+// a five-byte variable length integer.
 func BenchmarkWriteVarInt5(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_ = WriteVarInt(io.Discard, 0, 4294967295)
@@ -85,7 +85,7 @@ func BenchmarkWriteVarInt5(b *testing.B) {
 }
 
 // BenchmarkWriteVarInt9 performs a benchmark on how long it takes to write
-// a nine byte variable length integer.
+// a nine-byte variable length integer.
 func BenchmarkWriteVarInt9(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_ = WriteVarInt(io.Discard, 0, 18446744073709551615)
@@ -105,7 +105,7 @@ func BenchmarkReadVarInt1(b *testing.B) {
 }
 
 // BenchmarkReadVarInt3 performs a benchmark on how long it takes to read
-// a three byte variable length integer.
+// a three-byte variable length integer.
 func BenchmarkReadVarInt3(b *testing.B) {
 	buf := []byte{0x0fd, 0xff, 0xff}
 
@@ -117,7 +117,7 @@ func BenchmarkReadVarInt3(b *testing.B) {
 }
 
 // BenchmarkReadVarInt5 performs a benchmark on how long it takes to read
-// a five byte variable length integer.
+// a five-byte variable length integer.
 func BenchmarkReadVarInt5(b *testing.B) {
 	buf := []byte{0xfe, 0xff, 0xff, 0xff, 0xff}
 
@@ -129,7 +129,7 @@ func BenchmarkReadVarInt5(b *testing.B) {
 }
 
 // BenchmarkReadVarInt9 performs a benchmark on how long it takes to read
-// a nine byte variable length integer.
+// a nine-byte variable length integer.
 func BenchmarkReadVarInt9(b *testing.B) {
 	buf := []byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
 
@@ -141,7 +141,7 @@ func BenchmarkReadVarInt9(b *testing.B) {
 }
 
 // BenchmarkReadVarStr4 performs a benchmark on how long it takes to read a
-// four byte variable length string.
+// four-byte variable length string.
 func BenchmarkReadVarStr4(b *testing.B) {
 	buf := []byte{0x04, 't', 'e', 's', 't'}
 
@@ -153,7 +153,7 @@ func BenchmarkReadVarStr4(b *testing.B) {
 }
 
 // BenchmarkReadVarStr10 performs a benchmark on how long it takes to read a
-// ten byte variable length string.
+// ten-byte variable length string.
 func BenchmarkReadVarStr10(b *testing.B) {
 	buf := []byte{0x0a, 't', 'e', 's', 't', '0', '1', '2', '3', '4', '5'}
 
@@ -165,7 +165,7 @@ func BenchmarkReadVarStr10(b *testing.B) {
 }
 
 // BenchmarkWriteVarStr4 performs a benchmark on how long it takes to write a
-// four byte variable length string.
+// four-byte variable length string.
 func BenchmarkWriteVarStr4(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_ = WriteVarString(io.Discard, 0, "test")
@@ -173,7 +173,7 @@ func BenchmarkWriteVarStr4(b *testing.B) {
 }
 
 // BenchmarkWriteVarStr10 performs a benchmark on how long it takes to write a
-// ten byte variable length string.
+// ten-byte variable length string.
 func BenchmarkWriteVarStr10(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_ = WriteVarString(io.Discard, 0, "test012345")
@@ -269,7 +269,7 @@ func BenchmarkReadTxIn(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		_, _ = r.Seek(0, 0)
-		readTxIn(r, 0, 0, &txIn)
+		_ = readTxIn(r, 0, 0, &txIn)
 		scriptPool.Return(txIn.SignatureScript)
 	}
 }
@@ -279,7 +279,7 @@ func BenchmarkReadTxIn(b *testing.B) {
 func BenchmarkWriteTxIn(b *testing.B) {
 	txIn := blockOne.Transactions[0].TxIn[0]
 	for i := 0; i < b.N; i++ {
-		writeTxIn(io.Discard, 0, 0, txIn)
+		_ = writeTxIn(io.Discard, 0, 0, txIn)
 	}
 }
 
@@ -293,7 +293,7 @@ func BenchmarkDeserializeTxSmall(b *testing.B) {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, //  // Previous output hash
-		0xff, 0xff, 0xff, 0xff, // Prevous output index
+		0xff, 0xff, 0xff, 0xff, // Previous output index
 		0x07,                                     // Varint for length of signature script
 		0x04, 0xff, 0xff, 0x00, 0x1d, 0x01, 0x04, // Signature script
 		0xff, 0xff, 0xff, 0xff, // Sequence
@@ -328,13 +328,15 @@ func BenchmarkDeserializeTxSmall(b *testing.B) {
 // deserialize a very large transaction.
 func BenchmarkDeserializeTxLarge(b *testing.B) {
 	// tx bb41a757f405890fb0f5856228e23b715702d714d59bf2b1feb70d8b2b4e3e08
-	// from the main block chain.
+	// from the main blockchain.
 	fi, err := os.Open("testdata/megatx.bin.bz2")
 	if err != nil {
 		b.Fatalf("Failed to read transaction data: %v", err)
 	}
 
-	defer fi.Close()
+	defer func() {
+		_ = fi.Close()
+	}()
 
 	buf, err := io.ReadAll(bzip2.NewReader(fi))
 	if err != nil {
@@ -384,7 +386,7 @@ func BenchmarkReadBlockHeader(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		_, _ = r.Seek(0, 0)
-		readBlockHeader(r, 0, &header)
+		_ = readBlockHeader(r, 0, &header)
 	}
 }
 
@@ -393,7 +395,7 @@ func BenchmarkReadBlockHeader(b *testing.B) {
 func BenchmarkWriteBlockHeader(b *testing.B) {
 	header := blockOne.Header
 	for i := 0; i < b.N; i++ {
-		writeBlockHeader(io.Discard, 0, &header)
+		_ = writeBlockHeader(io.Discard, 0, &header)
 	}
 }
 
@@ -435,7 +437,7 @@ func BenchmarkDecodeGetHeaders(b *testing.B) {
 }
 
 // BenchmarkDecodeHeaders performs a benchmark on how long it takes to
-// decode a headers message with the maximum number of headers.
+// decode a header message with the maximum number of headers.
 func BenchmarkDecodeHeaders(b *testing.B) {
 	// Create a message with the maximum number of headers.
 	pver := ProtocolVersion

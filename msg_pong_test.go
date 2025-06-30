@@ -6,6 +6,7 @@ package wire
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"reflect"
 	"testing"
@@ -36,7 +37,7 @@ func TestPongLatest(t *testing.T) {
 			cmd, wantCmd)
 	}
 
-	// Ensure max payload is expected value for latest protocol version.
+	// Ensure max payload is expected value for the latest protocol version.
 	wantPayload := uint64(8)
 	maxPayload := msg.MaxPayloadLength(pver)
 
@@ -85,14 +86,14 @@ func TestPongBIP0031(t *testing.T) {
 		t.Errorf("Should get same nonce back out.")
 	}
 
-	// Ensure max payload is expected value for old protocol version.
+	// Ensure max payload is expected value for an old protocol version.
 	size := msg.MaxPayloadLength(pver)
 	if size != 0 {
 		t.Errorf("Max length should be 0 for pong protocol version %d.",
 			pver)
 	}
 
-	// Test encode with old protocol version.
+	// Test encode with an old protocol version.
 	var buf bytes.Buffer
 
 	err = msg.BsvEncode(&buf, pver, enc)
@@ -101,7 +102,7 @@ func TestPongBIP0031(t *testing.T) {
 			msg)
 	}
 
-	// Test decode with old protocol version.
+	// Test decoding with an old protocol version.
 	readmsg := NewMsgPong(0)
 
 	err = readmsg.Bsvdecode(&buf, pver, enc)
@@ -130,7 +131,7 @@ func TestPongCrossProtocol(t *testing.T) {
 		t.Errorf("Should get same nonce back out.")
 	}
 
-	// Encode with latest protocol version.
+	// Encode with the latest protocol version.
 	var buf bytes.Buffer
 
 	err = msg.BsvEncode(&buf, ProtocolVersion, BaseEncoding)
@@ -138,7 +139,7 @@ func TestPongCrossProtocol(t *testing.T) {
 		t.Errorf("encode of MsgPong failed %v err <%v>", msg, err)
 	}
 
-	// Decode with old protocol version.
+	// Decode with an old protocol version.
 	readmsg := NewMsgPong(0)
 
 	err = readmsg.Bsvdecode(&buf, BIP0031Version, BaseEncoding)
@@ -263,8 +264,9 @@ func TestPongWireErrors(t *testing.T) {
 
 		// For errors which are not of type MessageError, check them for
 		// equality.
-		if _, ok := err.(*MessageError); !ok {
-			if err != test.writeErr {
+		var msgError *MessageError
+		if !errors.As(err, &msgError) {
+			if !errors.Is(err, test.writeErr) {
 				t.Errorf("BsvEncode #%d wrong error got: %v, "+
 					"want: %v", i, err, test.writeErr)
 				continue
@@ -285,8 +287,8 @@ func TestPongWireErrors(t *testing.T) {
 
 		// For errors which are not of type MessageError, check them for
 		// equality.
-		if _, ok := err.(*MessageError); !ok {
-			if err != test.readErr {
+		if !errors.As(err, &msgError) {
+			if !errors.Is(err, test.readErr) {
 				t.Errorf("Bsvdecode #%d wrong error got: %v, "+
 					"want: %v", i, err, test.readErr)
 				continue

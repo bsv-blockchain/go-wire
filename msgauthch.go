@@ -17,7 +17,7 @@ type MsgAuthch struct {
 
 // Bsvdecode decodes r using the bitcoin protocol encoding into the receiver.
 // This is part of the Message interface implementation.
-func (msg *MsgAuthch) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) error {
+func (msg *MsgAuthch) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding) error {
 	// Read stop hash
 	err := readElement(r, &msg.Version)
 	if err != nil {
@@ -36,7 +36,7 @@ func (msg *MsgAuthch) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) e
 
 // BsvEncode encodes the receiver to w using the bitcoin protocol encoding.
 // This is part of the Message interface implementation.
-func (msg *MsgAuthch) BsvEncode(w io.Writer, pver uint32, enc MessageEncoding) error {
+func (msg *MsgAuthch) BsvEncode(w io.Writer, _ uint32, _ MessageEncoding) error {
 	return writeElements(w, msg.Version, msg.Length, msg.Challenge)
 }
 
@@ -48,7 +48,7 @@ func (msg *MsgAuthch) Command() string {
 
 // MaxPayloadLength returns the maximum length the payload can be for the
 // receiver.  This is part of the Message interface implementation.
-func (msg *MsgAuthch) MaxPayloadLength(pver uint32) uint64 {
+func (msg *MsgAuthch) MaxPayloadLength(_ uint32) uint64 {
 	return 40
 }
 

@@ -7,6 +7,7 @@ package wire
 import (
 	"bytes"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"reflect"
@@ -37,7 +38,7 @@ func TestExtendedTx(t *testing.T) {
 			cmd, wantCmd)
 	}
 
-	// Ensure max payload is expected value for latest protocol version.
+	// Ensure max payload is expected value for the latest protocol version.
 	wantPayload := fixedExcessiveBlockSize
 	maxPayload := msg.MaxPayloadLength(pver)
 
@@ -309,7 +310,7 @@ func TestExtendedTxSerializeErrors(t *testing.T) {
 		w := newFixedWriter(test.max)
 		err := test.in.Serialize(w)
 
-		if err != test.writeErr {
+		if !errors.Is(err, test.writeErr) {
 			t.Errorf("Serialize #%d wrong error got: %v, want: %v",
 				i, err, test.writeErr)
 			continue
@@ -321,7 +322,7 @@ func TestExtendedTxSerializeErrors(t *testing.T) {
 		r := newFixedReader(test.max, test.buf)
 		err = tx.Deserialize(r)
 
-		if err != test.readErr {
+		if !errors.Is(err, test.readErr) {
 			t.Errorf("Deserialize #%d wrong error got: %v, want: %v",
 				i, err, test.readErr)
 			continue
@@ -376,7 +377,7 @@ func TestExtendedTxOverflowErrors(t *testing.T) {
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Previous output hash
-				0xff, 0xff, 0xff, 0xff, // Prevous output index
+				0xff, 0xff, 0xff, 0xff, // Previous output index
 				0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 				0xff, // Varint for length of signature script
 			}, pver, BaseEncoding, txVer, &MessageError{},
@@ -392,13 +393,13 @@ func TestExtendedTxOverflowErrors(t *testing.T) {
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Previous output hash
-				0xff, 0xff, 0xff, 0xff, // Prevous output index
+				0xff, 0xff, 0xff, 0xff, // Previous output index
 				0x00,                   // Varint for length of signature script
 				0xff, 0xff, 0xff, 0xff, // Sequence
 				0x01,                                           // Varint for number of output transactions
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Transaction amount
 				0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-				0xff, // Varint for length of public key script
+				0xff, // Varint for length of a public key script
 			}, pver, BaseEncoding, txVer, &MessageError{},
 		},
 	}
@@ -441,10 +442,10 @@ func TestExtendedTxSerializeSizeStripped(t *testing.T) {
 		in   *MsgTx // Tx to encode
 		size int    // Expected serialized size
 	}{
-		// No inputs or outpus.
+		// No inputs or outputs.
 		{noTx, 10},
 
-		// Transcaction with an input and an output.
+		// Transaction with an input and an output.
 		{multiTx, 210},
 	}
 

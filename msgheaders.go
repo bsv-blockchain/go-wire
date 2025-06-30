@@ -37,7 +37,7 @@ func (msg *MsgHeaders) AddBlockHeader(bh *BlockHeader) error {
 
 // Bsvdecode decodes r using the bitcoin protocol encoding into the receiver.
 // This is part of the Message interface implementation.
-func (msg *MsgHeaders) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) error {
+func (msg *MsgHeaders) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding) error {
 	count, err := ReadVarInt(r, pver)
 	if err != nil {
 		return err
@@ -50,7 +50,7 @@ func (msg *MsgHeaders) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) 
 		return messageError("MsgHeaders.Bsvdecode", str)
 	}
 
-	// Create a contiguous slice of headers to deserialize into in order to
+	// Create a contiguous slice of headers to deserialize into to
 	// reduce the number of allocations.
 	headers := make([]BlockHeader, count)
 	msg.Headers = make([]*BlockHeader, 0, count)
@@ -58,12 +58,13 @@ func (msg *MsgHeaders) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) 
 	for i := uint64(0); i < count; i++ {
 		bh := &headers[i]
 
-		err := readBlockHeader(r, pver, bh)
+		err = readBlockHeader(r, pver, bh)
 		if err != nil {
 			return err
 		}
 
-		txCount, err := ReadVarInt(r, pver)
+		var txCount uint64
+		txCount, err = ReadVarInt(r, pver)
 		if err != nil {
 			return err
 		}
@@ -75,7 +76,10 @@ func (msg *MsgHeaders) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) 
 			return messageError("MsgHeaders.Bsvdecode", str)
 		}
 
-		msg.AddBlockHeader(bh)
+		err = msg.AddBlockHeader(bh)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -83,7 +87,7 @@ func (msg *MsgHeaders) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) 
 
 // BsvEncode encodes the receiver to w using the bitcoin protocol encoding.
 // This is part of the Message interface implementation.
-func (msg *MsgHeaders) BsvEncode(w io.Writer, pver uint32, enc MessageEncoding) error {
+func (msg *MsgHeaders) BsvEncode(w io.Writer, pver uint32, _ MessageEncoding) error {
 	// Limit to max block headers per message.
 	count := len(msg.Headers)
 	if count > MaxBlockHeadersPerMsg {
@@ -124,7 +128,7 @@ func (msg *MsgHeaders) Command() string {
 
 // MaxPayloadLength returns the maximum length the payload can be for the
 // receiver.  This is part of the Message interface implementation.
-func (msg *MsgHeaders) MaxPayloadLength(pver uint32) uint64 {
+func (msg *MsgHeaders) MaxPayloadLength(_ uint32) uint64 {
 	// Num headers (varInt) + max allowed headers (header length + 1 byte
 	// for the number of transactions which is always 0).
 	return MaxVarIntPayload + ((MaxBlockHeaderPayload + 1) *

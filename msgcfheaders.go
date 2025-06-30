@@ -49,7 +49,7 @@ func (msg *MsgCFHeaders) AddCFHash(hash *chainhash.Hash) error {
 // Bsvdecode decodes r using the bitcoin protocol encoding into the receiver.
 // This is part of the Message interface implementation.
 func (msg *MsgCFHeaders) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding) error {
-	// Read filter type
+	// Read a filter type
 	err := readElement(r, &msg.FilterType)
 	if err != nil {
 		return err
@@ -82,7 +82,7 @@ func (msg *MsgCFHeaders) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding) 
 		return messageError("MsgCFHeaders.Bsvdecode", str)
 	}
 
-	// Create a contiguous slice of hashes to deserialize into in order to
+	// Create a contiguous slice of hashes to deserialize into to
 	// reduce the number of allocations.
 	msg.FilterHashes = make([]*chainhash.Hash, 0, count)
 
@@ -103,7 +103,7 @@ func (msg *MsgCFHeaders) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding) 
 // BsvEncode encodes the receiver to w using the bitcoin protocol encoding.
 // This is part of the Message interface implementation.
 func (msg *MsgCFHeaders) BsvEncode(w io.Writer, pver uint32, _ MessageEncoding) error {
-	// Write filter type
+	// Write a filter type
 	err := writeElement(w, msg.FilterType)
 	if err != nil {
 		return err
@@ -170,7 +170,7 @@ func (msg *MsgCFHeaders) Command() string {
 
 // MaxPayloadLength returns the maximum length the payload can be for the
 // receiver. This is part of the Message interface implementation.
-func (msg *MsgCFHeaders) MaxPayloadLength(pver uint32) uint64 {
+func (msg *MsgCFHeaders) MaxPayloadLength(_ uint32) uint64 {
 	// Hash size + filter type + num headers (varInt) +
 	// (header size * max headers).
 	return 1 + chainhash.HashSize + chainhash.HashSize + MaxVarIntPayload +

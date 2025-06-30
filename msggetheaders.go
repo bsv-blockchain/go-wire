@@ -22,8 +22,8 @@ import (
 // AddBlockLocatorHash to build up the list of block locator hashes.
 //
 // The algorithm for building the block locator hashes should be to add the
-// hashes in reverse order until you reach the genesis block.  In order to keep
-// the list of locator hashes to a resonable number of entries, first add the
+// hashes in reverse order until you reach the genesis block.  To keep
+// the list of locator hashes to a reasonable number of entries, first add the
 // most recent 10 block hashes, then double the step each loop iteration to
 // exponentially decrease the number of hashes the further away from head and
 // closer to the genesis block you get.
@@ -48,7 +48,7 @@ func (msg *MsgGetHeaders) AddBlockLocatorHash(hash *chainhash.Hash) error {
 
 // Bsvdecode decodes r using the bitcoin protocol encoding into the receiver.
 // This is part of the Message interface implementation.
-func (msg *MsgGetHeaders) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) error {
+func (msg *MsgGetHeaders) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding) error {
 	err := readElement(r, &msg.ProtocolVersion)
 	if err != nil {
 		return err
@@ -66,7 +66,7 @@ func (msg *MsgGetHeaders) Bsvdecode(r io.Reader, pver uint32, enc MessageEncodin
 		return messageError("MsgGetHeaders.Bsvdecode", str)
 	}
 
-	// Create a contiguous slice of hashes to deserialize into in order to
+	// Create a contiguous slice of hashes to deserialize into to
 	// reduce the number of allocations.
 	locatorHashes := make([]chainhash.Hash, count)
 	msg.BlockLocatorHashes = make([]*chainhash.Hash, 0, count)
@@ -74,12 +74,15 @@ func (msg *MsgGetHeaders) Bsvdecode(r io.Reader, pver uint32, enc MessageEncodin
 	for i := uint64(0); i < count; i++ {
 		hash := &locatorHashes[i]
 
-		err := readElement(r, hash)
+		err = readElement(r, hash)
 		if err != nil {
 			return err
 		}
 
-		msg.AddBlockLocatorHash(hash)
+		err = msg.AddBlockLocatorHash(hash)
+		if err != nil {
+			return err
+		}
 	}
 
 	return readElement(r, &msg.HashStop)
@@ -87,7 +90,7 @@ func (msg *MsgGetHeaders) Bsvdecode(r io.Reader, pver uint32, enc MessageEncodin
 
 // BsvEncode encodes the receiver to w using the bitcoin protocol encoding.
 // This is part of the Message interface implementation.
-func (msg *MsgGetHeaders) BsvEncode(w io.Writer, pver uint32, enc MessageEncoding) error {
+func (msg *MsgGetHeaders) BsvEncode(w io.Writer, pver uint32, _ MessageEncoding) error {
 	// Limit to max block locator hashes per message.
 	count := len(msg.BlockLocatorHashes)
 	if count > MaxBlockLocatorsPerMsg {
@@ -124,7 +127,7 @@ func (msg *MsgGetHeaders) Command() string {
 
 // MaxPayloadLength returns the maximum length the payload can be for the
 // receiver.  This is part of the Message interface implementation.
-func (msg *MsgGetHeaders) MaxPayloadLength(pver uint32) uint64 {
+func (msg *MsgGetHeaders) MaxPayloadLength(_ uint32) uint64 {
 	// Version 4 bytes + num block locator hashes (varInt) + max allowed block
 	// locators + hash stop.
 	return 4 + MaxVarIntPayload + (MaxBlockLocatorsPerMsg *
