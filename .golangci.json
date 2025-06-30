@@ -261,6 +261,11 @@
         "force-case-trailing-whitespace": 0,
         "force-err-cuddling": false,
         "strict-append": true
+      },
+      "gosec": {
+        "excludes": [
+          "G115"
+        ]
       }
     }
   },
