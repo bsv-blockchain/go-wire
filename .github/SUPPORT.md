@@ -46,7 +46,7 @@ Everything from commit rules to contributor expectations is in [AGENTS.md](./AGE
 ## 📬 Private Contact
 
 For sensitive or non-public concerns, reach out to:
-📧 [go-wire@mrz1818.com](mailto:go-wire@mrz1818.com)
+📧 [security@bitcoinsv.io](mailto:security@bitcoinsv.io)
 
 <br/>
 
