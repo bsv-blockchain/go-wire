@@ -16,6 +16,8 @@ import (
 	"github.com/davecgh/go-spew/spew"
 )
 
+const localhostAddr = "127.0.0.1"
+
 // TestAddr tests the MsgAddr API.
 func TestAddr(t *testing.T) {
 	pver := ProtocolVersion
@@ -41,7 +43,7 @@ func TestAddr(t *testing.T) {
 	}
 
 	// Ensure NetAddresses are added properly.
-	tcpAddr := &net.TCPAddr{IP: net.ParseIP("127.0.0.1"), Port: 8333}
+	tcpAddr := &net.TCPAddr{IP: net.ParseIP(localhostAddr), Port: 8333}
 	na := NewNetAddress(tcpAddr, SFNodeNetwork)
 	err := msg.AddAddress(na)
 
@@ -114,7 +116,7 @@ func TestAddrWire(t *testing.T) {
 	na := &NetAddress{
 		Timestamp: time.Unix(0x495fab29, 0), // 2009-01-03 12:15:05 -0600 CST
 		Services:  SFNodeNetwork,
-		IP:        net.ParseIP("127.0.0.1"),
+		IP:        net.ParseIP(localhostAddr),
 		Port:      8333,
 	}
 	na2 := &NetAddress{
@@ -231,7 +233,7 @@ func TestAddrWireErrors(t *testing.T) {
 	na := &NetAddress{
 		Timestamp: time.Unix(0x495fab29, 0), // 2009-01-03 12:15:05 -0600 CST
 		Services:  SFNodeNetwork,
-		IP:        net.ParseIP("127.0.0.1"),
+		IP:        net.ParseIP(localhostAddr),
 		Port:      8333,
 	}
 	na2 := &NetAddress{
