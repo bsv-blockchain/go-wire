@@ -1,5 +1,5 @@
 # 🚀 go-wire
-BSV Blockchain Wire Protocol
+> BSV Blockchain Wire Protocol
 
 <table>
   <thead>
