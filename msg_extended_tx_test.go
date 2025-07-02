@@ -13,8 +13,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/bsv-blockchain/go-bt/v2/chainhash"
 	"github.com/davecgh/go-spew/spew"
-	"github.com/libsv/go-bt/v2/chainhash"
 )
 
 // TestExtendedTx tests the MsgTx API.

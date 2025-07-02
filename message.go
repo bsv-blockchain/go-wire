@@ -12,7 +12,7 @@ import (
 	"math"
 	"unicode/utf8"
 
-	"github.com/libsv/go-bt/v2/chainhash"
+	"github.com/bsv-blockchain/go-bt/v2/chainhash"
 )
 
 // MessageHeaderSize is the number of bytes in a bitcoin message header.

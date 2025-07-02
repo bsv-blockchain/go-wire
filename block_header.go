@@ -9,7 +9,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/libsv/go-bt/v2/chainhash"
+	"github.com/bsv-blockchain/go-bt/v2/chainhash"
 )
 
 // MaxBlockHeaderPayload is the maximum number of bytes a block header can be.
