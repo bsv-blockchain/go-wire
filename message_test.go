@@ -14,8 +14,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bsv-blockchain/go-bt/v2/chainhash"
 	"github.com/davecgh/go-spew/spew"
-	"github.com/libsv/go-bt/v2/chainhash"
 )
 
 // makeHeader is a convenience function to make a message header in the form of

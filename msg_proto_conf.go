@@ -9,7 +9,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/libsv/go-bt/v2"
+	"github.com/bsv-blockchain/go-bt/v2"
 )
 
 // MsgProtoconf implements the Message interface and represents a bitcoin
