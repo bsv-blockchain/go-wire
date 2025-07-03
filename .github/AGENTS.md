@@ -41,7 +41,7 @@ capabilities in custom nodes or tooling.
 | `.vscode/`       | VS Code settings and extensions for development                                   |
 | `.make/`         | Shared Makefile targets used by `Makefile`                                        |
 | `examples/`      | Example program demonstrating package usage                                       |
-| `.` (root)       | Source files and tests for the `go-wire` package                                  |
+| `.` (root)       | Source files and tests for the local package                                      |
 
 <br/>
 
@@ -720,9 +720,7 @@ This section tracks notable updates to `AGENTS.md`, including the date, author, 
 All contributors are expected to append entries here when making meaningful changes to agent behavior, conventions, or policies.
 
 
-| Date       | Author   | Summary of Changes                                            |
-|------------|----------|---------------------------------------------------------------|
-| 2025-06-30 | @mrz1836 | Updated project overview to reflect BSV wire protocol library |
-| 2025-06-27 | @icellan | Adapted to fix this project go-wire                           |
-| 2025-06-26 | @icellan | Documented citation and configuration files for contributors  |
+| Date       | Author   | Summary of Changes          |
+|------------|----------|-----------------------------|
+| 2025-06-30 | @mrz1836 | Adapted to fix this project |
 > For minor edits (typos, formatting), this log update is optional. For all behavioral or structural changes, log entries are **required**.
