@@ -243,7 +243,7 @@ func TestGetHeadersWire(t *testing.T) {
 		},
 	}
 
-	t.Logf("Running %d tests", len(tests))
+	t.Logf(runningTestsFmt, len(tests))
 
 	for i, test := range tests {
 		// Encode the message to wire format.
@@ -376,7 +376,7 @@ func TestGetHeadersWireErrors(t *testing.T) {
 		{maxGetHeaders, maxGetHeadersEncoded, pver, BaseEncoding, 7, wireErr, wireErr},
 	}
 
-	t.Logf("Running %d tests", len(tests))
+	t.Logf(runningTestsFmt, len(tests))
 
 	for i, test := range tests {
 		// Encode to wire format.

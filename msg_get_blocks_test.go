@@ -253,7 +253,7 @@ func TestGetBlocksWire(t *testing.T) {
 		},
 	}
 
-	t.Logf("Running %d tests", len(tests))
+	t.Logf(runningTestsFmt, len(tests))
 
 	for i, test := range tests {
 		// Encode the message to wire format.
@@ -385,7 +385,7 @@ func TestGetBlocksWireErrors(t *testing.T) {
 		{maxGetBlocks, maxGetBlocksEncoded, pver, BaseEncoding, 7, wireErr, wireErr},
 	}
 
-	t.Logf("Running %d tests", len(tests))
+	t.Logf(runningTestsFmt, len(tests))
 
 	for i, test := range tests {
 		// Encode to wire format.

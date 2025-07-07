@@ -178,7 +178,7 @@ func TestMerkleBlockWire(t *testing.T) {
 		},
 	}
 
-	t.Logf("Running %d tests", len(tests))
+	t.Logf(runningTestsFmt, len(tests))
 
 	for i, test := range tests {
 		// Encode the message to wire format.
@@ -296,7 +296,7 @@ func TestMerkleBlockWireErrors(t *testing.T) {
 		},
 	}
 
-	t.Logf("Running %d tests", len(tests))
+	t.Logf(runningTestsFmt, len(tests))
 
 	for i, test := range tests {
 		// Encode to wire format.
@@ -387,7 +387,7 @@ func TestMerkleBlockOverflowErrors(t *testing.T) {
 		{exceedMaxFlagBytes, pver, BaseEncoding, &MessageError{}},
 	}
 
-	t.Logf("Running %d tests", len(tests))
+	t.Logf(runningTestsFmt, len(tests))
 
 	for i, test := range tests {
 		// Decode from wire format.
