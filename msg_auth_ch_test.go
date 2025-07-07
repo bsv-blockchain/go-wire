@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestNewMsgAuthch_SetsFields verifies the constructor and basic accessors.
-func TestNewMsgAuthch_SetsFields(t *testing.T) {
+// TestNewMsgAuthchSetsFields verifies the constructor and basic accessors.
+func TestNewMsgAuthchSetsFields(t *testing.T) {
 	msg := NewMsgAuthch("hello")
 
 	assert.Equal(t, int32(1), msg.Version)
@@ -22,8 +22,8 @@ func TestNewMsgAuthch_SetsFields(t *testing.T) {
 	assert.Equal(t, uint64(40), msg.MaxPayloadLength(ProtocolVersion))
 }
 
-// TestMsgAuthch_Wire tests encode and decode round trip.
-func TestMsgAuthch_Wire(t *testing.T) {
+// TestMsgAuthchWire tests encode and decode round trip.
+func TestMsgAuthchWire(t *testing.T) {
 	orig := NewMsgAuthch("challenge")
 	var buf bytes.Buffer
 	require.NoError(t, orig.BsvEncode(&buf, ProtocolVersion, BaseEncoding))
@@ -32,12 +32,12 @@ func TestMsgAuthch_Wire(t *testing.T) {
 	require.NoError(t, decoded.Bsvdecode(&buf, ProtocolVersion, BaseEncoding))
 
 	assert.Equal(t, orig.Version, decoded.Version)
-	assert.Equal(t, uint32(len(decoded.Challenge)), decoded.Length)
+	assert.Equal(t, uint32(len(decoded.Challenge)), decoded.Length) //nolint:gosec // G115 Conversion
 	assert.NotEmpty(t, decoded.Challenge)
 }
 
-// TestMsgAuthch_WireErrors exercises error paths for encoding and decoding.
-func TestMsgAuthch_WireErrors(t *testing.T) {
+// TestMsgAuthchWireErrors exercises error paths for encoding and decoding.
+func TestMsgAuthchWireErrors(t *testing.T) {
 	base := NewMsgAuthch("abcde")
 	var b bytes.Buffer
 	require.NoError(t, base.BsvEncode(&b, ProtocolVersion, BaseEncoding))
@@ -98,7 +98,7 @@ func TestMsgAuthch_WireErrors(t *testing.T) {
 			err := tt.in.BsvEncode(w, ProtocolVersion, BaseEncoding)
 			if tt.writeErr != nil {
 				require.Error(t, err)
-				assert.ErrorIs(t, err, tt.writeErr)
+				require.ErrorIs(t, err, tt.writeErr)
 			} else {
 				require.NoError(t, err)
 			}
