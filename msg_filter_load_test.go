@@ -23,20 +23,11 @@ func TestFilterLoadLatest(t *testing.T) {
 
 	// Ensure the command is expected value.
 	wantCmd := "filterload"
-	if cmd := msg.Command(); cmd != wantCmd {
-		t.Errorf("NewMsgFilterLoad: wrong command - got %v want %v",
-			cmd, wantCmd)
-	}
+	assertCommand(t, msg, wantCmd)
 
 	// Ensure max payload is expected value for the latest protocol version.
 	wantPayload := uint64(36012)
-	maxPayload := msg.MaxPayloadLength(pver)
-
-	if maxPayload != wantPayload {
-		t.Errorf("MaxPayLoadLength: wrong max payload length for "+
-			"protocol version %d - got %v, want %v", pver,
-			maxPayload, wantPayload)
-	}
+	assertMaxPayload(t, msg, pver, wantPayload)
 
 	// Test encode with latest protocol version.
 	var buf bytes.Buffer

@@ -26,21 +26,12 @@ func TestAddr(t *testing.T) {
 	wantCmd := "addr"
 	msg := NewMsgAddr()
 
-	if cmd := msg.Command(); cmd != wantCmd {
-		t.Errorf("NewMsgAddr: wrong command - got %v want %v",
-			cmd, wantCmd)
-	}
+	assertCommand(t, msg, wantCmd)
 
 	// Ensure max payload is expected value for a latest protocol version.
 	// Num addresses (varInt) + max allowed addresses.
 	wantPayload := uint64(30009)
-	maxPayload := msg.MaxPayloadLength(pver)
-
-	if maxPayload != wantPayload {
-		t.Errorf("MaxPayloadLength: wrong max payload length for "+
-			"protocol version %d - got %v, want %v", pver,
-			maxPayload, wantPayload)
-	}
+	assertMaxPayload(t, msg, pver, wantPayload)
 
 	// Ensure NetAddresses are added properly.
 	tcpAddr := &net.TCPAddr{IP: net.ParseIP(localhostAddr), Port: 8333}
@@ -86,26 +77,14 @@ func TestAddr(t *testing.T) {
 	// Num addresses (varInt) + max allowed addresses.
 	pver = NetAddressTimeVersion - 1
 	wantPayload = uint64(26009)
-	maxPayload = msg.MaxPayloadLength(pver)
-
-	if maxPayload != wantPayload {
-		t.Errorf("MaxPayloadLength: wrong max payload length for "+
-			"protocol version %d - got %v, want %v", pver,
-			maxPayload, wantPayload)
-	}
+	assertMaxPayload(t, msg, pver, wantPayload)
 
 	// Ensure max payload is expected value for protocol versions before
 	// multiple addresses were allowed.
 	// Num addresses (varInt) + a single net addresses.
 	pver = MultipleAddressVersion - 1
 	wantPayload = uint64(35)
-	maxPayload = msg.MaxPayloadLength(pver)
-
-	if maxPayload != wantPayload {
-		t.Errorf("MaxPayloadLength: wrong max payload length for "+
-			"protocol version %d - got %v, want %v", pver,
-			maxPayload, wantPayload)
-	}
+	assertMaxPayload(t, msg, pver, wantPayload)
 }
 
 // TestAddrWire tests the MsgAddr wire encode and decode for various numbers

@@ -24,21 +24,12 @@ func TestGetData(t *testing.T) {
 	wantCmd := "getdata"
 	msg := NewMsgGetData()
 
-	if cmd := msg.Command(); cmd != wantCmd {
-		t.Errorf("NewMsgGetData: wrong command - got %v want %v",
-			cmd, wantCmd)
-	}
+	assertCommand(t, msg, wantCmd)
 
 	// Ensure max payload is expected value for the latest protocol version.
 	// Num inventory vectors (varInt) + max allowed inventory vectors.
 	wantPayload := uint64(1800009)
-	maxPayload := msg.MaxPayloadLength(pver)
-
-	if maxPayload != wantPayload {
-		t.Errorf("MaxPayloadLength: wrong max payload length for "+
-			"protocol version %d - got %v, want %v", pver,
-			maxPayload, wantPayload)
-	}
+	assertMaxPayload(t, msg, pver, wantPayload)
 
 	// Ensure inventory vectors are added properly.
 	hash := chainhash.Hash{}
