@@ -354,7 +354,7 @@ func (msg *MsgTx) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding) error {
 		return err
 	}
 
-	msg.Version = int32(version)
+	msg.Version = int32(version) //nolint:gosec // G115 Conversion
 
 	count, err := ReadVarInt(r, pver)
 	if err != nil {
@@ -536,7 +536,7 @@ func (msg *MsgTx) Deserialize(r io.Reader) error {
 // See Serialize for encoding transactions to be stored to disk, such as in a
 // database, as opposed to encoding transactions for the wire.
 func (msg *MsgTx) BsvEncode(w io.Writer, pver uint32, _ MessageEncoding) error {
-	err := binarySerializer.PutUint32(w, littleEndian, uint32(msg.Version))
+	err := binarySerializer.PutUint32(w, littleEndian, uint32(msg.Version)) //nolint:gosec // G115 conversion
 	if err != nil {
 		return err
 	}
@@ -726,7 +726,6 @@ func readScript(r io.Reader, pver uint32, maxAllowed uint64, fieldName string) (
 
 	b := scriptPool.Borrow(count)
 	_, err = io.ReadFull(r, b)
-
 	if err != nil {
 		scriptPool.Return(b)
 		return nil, err
@@ -788,7 +787,7 @@ func readTxOut(r io.Reader, pver uint32, _ int32, to *TxOut) error {
 // NOTE: This function is exported to allow txscript to compute the
 // new sighashes for witness transactions (BIP0143).
 func WriteTxOut(w io.Writer, pver uint32, _ int32, to *TxOut) error {
-	err := binarySerializer.PutUint64(w, littleEndian, uint64(to.Value))
+	err := binarySerializer.PutUint64(w, littleEndian, uint64(to.Value)) //nolint:gosec // G115 conversion
 	if err != nil {
 		return err
 	}

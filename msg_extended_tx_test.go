@@ -231,7 +231,6 @@ func TestExtendedTxSerialize(t *testing.T) {
 			// Serialize the transaction.
 			var buf bytes.Buffer
 			err := test.in.Serialize(&buf)
-
 			if err != nil {
 				t.Fatalf("Serialize #%d error %v", i, err)
 			}
@@ -246,7 +245,6 @@ func TestExtendedTxSerialize(t *testing.T) {
 
 			rbuf := bytes.NewReader(test.buf)
 			err = tx.Deserialize(rbuf)
-
 			if err != nil {
 				t.Fatalf("Deserialize #%d error %v", i, err)
 			}

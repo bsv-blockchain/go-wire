@@ -69,6 +69,7 @@ func (msg *MsgFilterAdd) Command() string {
 // MaxPayloadLength returns the maximum length the payload can be for the
 // receiver.  This is part of the Message interface implementation.
 func (msg *MsgFilterAdd) MaxPayloadLength(_ uint32) uint64 {
+	//nolint:gosec // G115 conversion
 	return uint64(VarIntSerializeSize(MaxFilterAddDataSize)) +
 		MaxFilterAddDataSize
 }

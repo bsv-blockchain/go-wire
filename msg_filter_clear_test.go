@@ -64,6 +64,7 @@ func TestFilterClearCrossProtocol(t *testing.T) {
 // various protocol versions.
 func TestFilterClearWire(t *testing.T) {
 	msgFilterClear := NewMsgFilterClear()
+
 	var msgFilterClearEncoded []byte
 
 	tests := []struct {
@@ -145,6 +146,7 @@ func TestFilterClearWireErrors(t *testing.T) {
 	wireErr := &MessageError{}
 
 	baseFilterClear := NewMsgFilterClear()
+
 	var baseFilterClearEncoded []byte
 
 	tests := []struct {

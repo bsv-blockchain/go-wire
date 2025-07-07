@@ -41,7 +41,7 @@ type MsgProtoconf struct {
 // NewMsgProtoconf returns a new bitcoin protoconf message that conforms to
 // the Message interface.  See MsgFeeFilter for details.
 func NewMsgProtoconf(maxRecvPayloadLength uint32, allowBlockPriority bool) *MsgProtoconf {
-	var length = DefaultMaxRecvPayloadLength
+	length := DefaultMaxRecvPayloadLength
 	if maxRecvPayloadLength > 0 {
 		length = maxRecvPayloadLength
 	}

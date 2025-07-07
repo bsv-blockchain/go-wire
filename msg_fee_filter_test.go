@@ -99,7 +99,6 @@ func TestFeeFilterWire(t *testing.T) {
 		// Encode the message to wire format.
 		var buf bytes.Buffer
 		err := test.in.BsvEncode(&buf, test.pver, BaseEncoding)
-
 		if err != nil {
 			t.Errorf("BsvEncode #%d error %v", i, err)
 			continue
@@ -116,7 +115,6 @@ func TestFeeFilterWire(t *testing.T) {
 
 		rbuf := bytes.NewReader(test.buf)
 		err = msg.Bsvdecode(rbuf, test.pver, BaseEncoding)
-
 		if err != nil {
 			t.Errorf("Bsvdecode #%d error %v", i, err)
 			continue

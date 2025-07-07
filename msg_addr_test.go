@@ -46,7 +46,6 @@ func TestAddr(t *testing.T) {
 	tcpAddr := &net.TCPAddr{IP: net.ParseIP(localhostAddr), Port: 8333}
 	na := NewNetAddress(tcpAddr, SFNodeNetwork)
 	err := msg.AddAddress(na)
-
 	if err != nil {
 		t.Errorf("AddAddress: %v", err)
 	}
@@ -191,7 +190,6 @@ func TestAddrWire(t *testing.T) {
 		// Encode the message to wire format.
 		var buf bytes.Buffer
 		err := test.in.BsvEncode(&buf, test.pver, test.enc)
-
 		if err != nil {
 			t.Errorf("BsvEncode #%d error %v", i, err)
 			continue
@@ -208,7 +206,6 @@ func TestAddrWire(t *testing.T) {
 
 		rbuf := bytes.NewReader(test.buf)
 		err = msg.Bsvdecode(rbuf, test.pver, test.enc)
-
 		if err != nil {
 			t.Errorf("Bsvdecode #%d error %v", i, err)
 			continue

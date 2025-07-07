@@ -104,6 +104,7 @@ func (msg *MsgCFilter) Command() string {
 // MaxPayloadLength returns the maximum length the payload can be for the
 // receiver.  This is part of the Message interface implementation.
 func (msg *MsgCFilter) MaxPayloadLength(_ uint32) uint64 {
+	//nolint:gosec // G115 Conversion
 	return uint64(VarIntSerializeSize(MaxCFilterDataSize)) +
 		MaxCFilterDataSize + chainhash.HashSize + 1
 }
@@ -111,7 +112,8 @@ func (msg *MsgCFilter) MaxPayloadLength(_ uint32) uint64 {
 // NewMsgCFilter returns a new bitcoin cfilter message that conforms to the
 // Message interface. See MsgCFilter for details.
 func NewMsgCFilter(filterType FilterType, blockHash *chainhash.Hash,
-	data []byte) *MsgCFilter {
+	data []byte,
+) *MsgCFilter {
 	return &MsgCFilter{
 		FilterType: filterType,
 		BlockHash:  *blockHash,

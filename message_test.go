@@ -21,7 +21,8 @@ import (
 // makeHeader is a convenience function to make a message header in the form of
 // a byte slice.  It is used to force errors when reading messages.
 func makeHeader(bsvnet BitcoinNet, command string,
-	payloadLen uint32, checksum uint32) []byte {
+	payloadLen uint32, checksum uint32,
+) []byte {
 	// The length of a bitcoin message header is 24 bytes.
 	// 4 byte magic number of the bitcoin network + 12 byte command + 4 byte
 	// payload length + 4 byte checksum.
@@ -201,7 +202,7 @@ func TestReadMessageWireErrors(t *testing.T) {
 
 	// Wire encoded bytes for a message that exceeds max overall message
 	// length.
-	mpl := uint32(maxMessagePayload())
+	mpl := uint32(maxMessagePayload()) //nolint:gosec // G115 Conversion
 	exceedMaxPayloadBytes := makeHeader(bsvnet, "getaddr", mpl+1, 0)
 
 	// Wire encoded bytes for a command which is invalid utf-8.

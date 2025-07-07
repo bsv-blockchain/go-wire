@@ -29,7 +29,7 @@ func (msg *MsgAuthch) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding) err
 		return err
 	}
 
-	msg.Length = uint32(len(msg.Challenge))
+	msg.Length = uint32(len(msg.Challenge)) //nolint:gosec // G115 Conversion
 
 	return nil
 }
@@ -56,7 +56,7 @@ func (msg *MsgAuthch) MaxPayloadLength(_ uint32) uint64 {
 func NewMsgAuthch(message string) *MsgAuthch {
 	return &MsgAuthch{
 		Version:   1,
-		Length:    uint32(len(message)),
+		Length:    uint32(len(message)), //nolint:gosec // G115 Conversion
 		Challenge: []byte(message),
 	}
 }

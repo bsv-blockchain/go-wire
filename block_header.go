@@ -96,7 +96,8 @@ func (h *BlockHeader) Serialize(w io.Writer) error {
 // block hash, merkle root hash, difficulty bits, and nonce used to generate the
 // block with defaults for the remaining fields.
 func NewBlockHeader(version int32, prevHash, merkleRootHash *chainhash.Hash,
-	bits uint32, nonce uint32) *BlockHeader {
+	bits uint32, nonce uint32,
+) *BlockHeader {
 	// Limit the timestamp to one second precision since the protocol
 	// doesn't support better.
 	return &BlockHeader{
@@ -121,7 +122,7 @@ func readBlockHeader(r io.Reader, _ uint32, bh *BlockHeader) error {
 // encoding block headers to be stored to disk, such as in a database, as
 // opposed to encoding for the wire.
 func writeBlockHeader(w io.Writer, _ uint32, bh *BlockHeader) error {
-	sec := uint32(bh.Timestamp.Unix())
+	sec := uint32(bh.Timestamp.Unix()) //nolint:gosec // G115 Conversion
 	return writeElements(w, bh.Version, &bh.PrevBlock, &bh.MerkleRoot,
 		sec, bh.Bits, bh.Nonce)
 }

@@ -19,6 +19,7 @@ func main() {
 	// main bitcoin network.
 	pVer := wire.ProtocolVersion
 	bsvNet := wire.MainNet
+
 	var buf bytes.Buffer
 
 	// Construct proper version message
@@ -44,6 +45,7 @@ func main() {
 	// are a wire.Message, a []byte which contains the unmarshalled
 	// raw payload, and a possible error.
 	var msg wire.Message
+
 	msg, _, err = wire.ReadMessage(readBuf, pVer, bsvNet)
 	if err != nil {
 		panic(err)

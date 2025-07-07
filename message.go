@@ -317,7 +317,8 @@ func WriteMessage(w io.Writer, msg Message, pver uint32, bsvnet BitcoinNet) erro
 // to specify the message encoding format to be used when serializing wire
 // messages.
 func WriteMessageWithEncodingN(w io.Writer, msg Message, pver uint32,
-	bsvnet BitcoinNet, encoding MessageEncoding) (int, error) {
+	bsvnet BitcoinNet, encoding MessageEncoding,
+) (int, error) {
 	if w == nil {
 		return 0, errors.New("writer must not be nil") //nolint:err113 // needs refactoring
 	}
@@ -348,7 +349,7 @@ func WriteMessageWithEncodingN(w io.Writer, msg Message, pver uint32,
 	lenp := len(payload)
 
 	// Enforce maximum overall message payload.
-	if lenp > int(maxMessagePayload()) {
+	if lenp > int(maxMessagePayload()) { //nolint:gosec // G115 Conversion
 		str := fmt.Sprintf("message payload is too large - encoded "+
 			"%d bytes, but maximum message payload is %d bytes",
 			lenp, maxMessagePayload())

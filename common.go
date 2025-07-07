@@ -211,7 +211,7 @@ func readElement(r io.Reader, element interface{}) error {
 			return err
 		}
 
-		*e = int32(rv)
+		*e = int32(rv) //nolint:gosec // G115 Conversion
 
 		return nil
 
@@ -231,7 +231,7 @@ func readElement(r io.Reader, element interface{}) error {
 			return err
 		}
 
-		*e = int64(rv)
+		*e = int64(rv) //nolint:gosec // G115 Conversion
 
 		return nil
 
@@ -277,7 +277,7 @@ func readElement(r io.Reader, element interface{}) error {
 			return err
 		}
 
-		*e = int64Time(time.Unix(int64(rv), 0))
+		*e = int64Time(time.Unix(int64(rv), 0)) //nolint:gosec // G115 Conversion
 
 		return nil
 
@@ -391,7 +391,7 @@ func writeElement(w io.Writer, element interface{}) error {
 	// type assertions first.
 	switch e := element.(type) {
 	case int32:
-		err := binarySerializer.PutUint32(w, littleEndian, uint32(e))
+		err := binarySerializer.PutUint32(w, littleEndian, uint32(e)) //nolint:gosec // G115 Conversion
 		if err != nil {
 			return err
 		}
@@ -407,7 +407,7 @@ func writeElement(w io.Writer, element interface{}) error {
 		return nil
 
 	case int64:
-		err := binarySerializer.PutUint64(w, littleEndian, uint64(e))
+		err := binarySerializer.PutUint64(w, littleEndian, uint64(e)) //nolint:gosec // G115 Conversion
 		if err != nil {
 			return err
 		}
@@ -559,6 +559,7 @@ func ReadVarInt(r io.Reader, _ uint32) (uint64, error) {
 
 	case 0xfe:
 		var sv uint32
+
 		sv, err = binarySerializer.Uint32(r, littleEndian)
 		if err != nil {
 			return 0, err
@@ -576,6 +577,7 @@ func ReadVarInt(r io.Reader, _ uint32) (uint64, error) {
 
 	case 0xfd:
 		var sv uint16
+
 		sv, err = binarySerializer.Uint16(r, littleEndian)
 		if err != nil {
 			return 0, err
@@ -611,7 +613,7 @@ func WriteVarInt(w io.Writer, _ uint32, val uint64) error {
 			return err
 		}
 
-		return binarySerializer.PutUint16(w, littleEndian, uint16(val))
+		return binarySerializer.PutUint16(w, littleEndian, uint16(val)) //nolint:gosec // G115 Conversion
 	}
 
 	if val <= math.MaxUint32 {
@@ -620,7 +622,7 @@ func WriteVarInt(w io.Writer, _ uint32, val uint64) error {
 			return err
 		}
 
-		return binarySerializer.PutUint32(w, littleEndian, uint32(val))
+		return binarySerializer.PutUint32(w, littleEndian, uint32(val)) //nolint:gosec // G115 Conversion
 	}
 
 	err := binarySerializer.PutUint8(w, 0xff)
@@ -672,6 +674,7 @@ func ReadVarString(r io.Reader, pver uint32) (string, error) {
 	if count > maxMessagePayload() {
 		str := fmt.Sprintf("variable length string is too long "+
 			"[count %d, max %d]", count, maxMessagePayload())
+
 		return "", messageError("ReadVarString", str)
 	}
 
@@ -707,7 +710,8 @@ func WriteVarString(w io.Writer, pver uint32, str string) error {
 // parameter is only used for the error message so it provides more context in
 // the error.
 func ReadVarBytes(r io.Reader, pver uint32, maxAllowed uint64,
-	fieldName string) ([]byte, error) {
+	fieldName string,
+) ([]byte, error) {
 	count, err := ReadVarInt(r, pver)
 	if err != nil {
 		return nil, err
@@ -719,6 +723,7 @@ func ReadVarBytes(r io.Reader, pver uint32, maxAllowed uint64,
 	if count > maxAllowed {
 		str := fmt.Sprintf("%s is larger than the max allowed size "+
 			"[count %d, max %d]", fieldName, count, maxAllowed)
+
 		return nil, messageError("ReadVarBytes", str)
 	}
 

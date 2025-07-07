@@ -157,7 +157,7 @@ func (msg *MsgExtendedTx) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding)
 		return err
 	}
 
-	msg.Version = int32(version)
+	msg.Version = int32(version) //nolint:gosec // G115 Conversion
 
 	count, err := ReadVarInt(r, pver)
 	if err != nil {
@@ -356,7 +356,7 @@ func (msg *MsgExtendedTx) Deserialize(r io.Reader) error {
 // See Serialize for encoding transactions to be stored to disk, such as in a
 // database, as opposed to encoding transactions for the wire.
 func (msg *MsgExtendedTx) BsvEncode(w io.Writer, pver uint32, _ MessageEncoding) error {
-	err := binarySerializer.PutUint32(w, littleEndian, uint32(msg.Version))
+	err := binarySerializer.PutUint32(w, littleEndian, uint32(msg.Version)) //nolint:gosec // G115 conversion
 	if err != nil {
 		return err
 	}

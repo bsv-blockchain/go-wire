@@ -110,13 +110,15 @@ func (msg *MsgMerkleBlock) BsvEncode(w io.Writer, pver uint32, _ MessageEncoding
 
 	// Read num transaction hashes and limit to max.
 	numHashes := len(msg.Hashes)
-	if numHashes > int(maxTxPerBlock()) {
+	if numHashes > int(maxTxPerBlock()) { //nolint:gosec // G115 conversion
 		str := fmt.Sprintf("too many transaction hashes for message "+
 			"[count %v, max %v]", numHashes, maxTxPerBlock())
 		return messageError("MsgMerkleBlock.Bsvdecode", str)
 	}
 
 	numFlagBytes := len(msg.Flags)
+
+	//nolint:gosec // G115 Conversion
 	if numFlagBytes > int(maxFlagsPerMerkleBlock()) {
 		str := fmt.Sprintf("too many flag bytes for message [count %v, "+
 			"max %v]", numFlagBytes, maxFlagsPerMerkleBlock())
