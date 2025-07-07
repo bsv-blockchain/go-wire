@@ -45,22 +45,13 @@ func TestGetBlocks(t *testing.T) {
 
 	// Ensure the command is expected value.
 	wantCmd := "getblocks"
-	if cmd := msg.Command(); cmd != wantCmd {
-		t.Errorf("NewMsgGetBlocks: wrong command - got %v want %v",
-			cmd, wantCmd)
-	}
+	assertCommand(t, msg, wantCmd)
 
 	// Ensure max payload is expected value for the latest protocol version.
 	// Protocol version 4 bytes + num hashes (varInt) + max block locator
 	// hashes and hash stop.
 	wantPayload := uint64(16045)
-	maxPayload := msg.MaxPayloadLength(pver)
-
-	if maxPayload != wantPayload {
-		t.Errorf("MaxPayloadLength: wrong max payload length for "+
-			"protocol version %d - got %v, want %v", pver,
-			maxPayload, wantPayload)
-	}
+	assertMaxPayload(t, msg, pver, wantPayload)
 
 	// Ensure block locator hashes are added properly.
 	err = msg.AddBlockLocatorHash(locatorHash)

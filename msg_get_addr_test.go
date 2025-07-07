@@ -20,21 +20,12 @@ func TestGetAddr(t *testing.T) {
 	wantCmd := "getaddr"
 	msg := NewMsgGetAddr()
 
-	if cmd := msg.Command(); cmd != wantCmd {
-		t.Errorf("NewMsgGetAddr: wrong command - got %v want %v",
-			cmd, wantCmd)
-	}
+	assertCommand(t, msg, wantCmd)
 
 	// Ensure max payload is expected value for latest protocol version.
 	// Num addresses (varInt) + max allowed addresses.
 	wantPayload := uint64(0)
-	maxPayload := msg.MaxPayloadLength(pver)
-
-	if maxPayload != wantPayload {
-		t.Errorf("MaxPayloadLength: wrong max payload length for "+
-			"protocol version %d - got %v, want %v", pver,
-			maxPayload, wantPayload)
-	}
+	assertMaxPayload(t, msg, pver, wantPayload)
 }
 
 // TestGetAddrWire tests the MsgGetAddr wire encode and decode for various
