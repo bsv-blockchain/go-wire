@@ -10,41 +10,41 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestNewMsgAuthresp_InitializesFields verifies that the constructor sets all
-// fields according to the input values and generates a nonce.
-func TestNewMsgAuthresp_InitializesFields(t *testing.T) {
+// TestNewMsgAuthrespInitializesFields verifies that the constructor sets all
+// fields according to the input values and generates nonce.
+func TestNewMsgAuthrespInitializesFields(t *testing.T) {
 	pubKey := bytes.Repeat([]byte{0x02}, SECP256K1_COMP_PUB_KEY_SIZE_IN_BYTES)
 	sig := bytes.Repeat([]byte{0x03}, SECP256K1_DER_SIGN_MAX_SIZE_IN_BYTES)
 
 	msg := NewMsgAuthresp(pubKey, sig)
 
-	assert.Equal(t, uint32(len(pubKey)), msg.PublicKeyLength)
+	assert.Equal(t, uint32(len(pubKey)), msg.PublicKeyLength) //nolint:gosec // G115 Conversion
 	assert.Equal(t, pubKey, msg.PublicKey)
-	assert.Equal(t, uint32(len(sig)), msg.SignatureLength)
+	assert.Equal(t, uint32(len(sig)), msg.SignatureLength) //nolint:gosec // G115 Conversion
 	assert.Equal(t, sig, msg.Signature)
 	assert.NotZero(t, msg.ClientNonce)
 }
 
-// TestMsgAuthresp_Command_ReturnsAuthresp ensures the Command method reports the
+// TestMsgAuthrespCommandReturnsAuthresp ensures the Command method reports the
 // correct protocol command.
-func TestMsgAuthresp_Command_ReturnsAuthresp(t *testing.T) {
+func TestMsgAuthrespCommandReturnsAuthresp(t *testing.T) {
 	msg := &MsgAuthresp{}
 
 	assert.Equal(t, CmdAuthresp, msg.Command())
 }
 
-// TestMsgAuthresp_MaxPayloadLength_CalculatesLimit verifies the maximum payload
+// TestMsgAuthrespMaxPayloadLengthCalculatesLimit verifies the maximum payload
 // computation.
-func TestMsgAuthresp_MaxPayloadLength_CalculatesLimit(t *testing.T) {
+func TestMsgAuthrespMaxPayloadLengthCalculatesLimit(t *testing.T) {
 	msg := &MsgAuthresp{}
-	expected := uint64(4 + SECP256K1_COMP_PUB_KEY_SIZE_IN_BYTES + 8 + 4 + SECP256K1_DER_SIGN_MAX_SIZE_IN_BYTES)
+	expected := uint64(4 + SECP256K1_COMP_PUB_KEY_SIZE_IN_BYTES + 8 + 4 + SECP256K1_DER_SIGN_MAX_SIZE_IN_BYTES) //nolint:gosec // G115 Conversion
 
 	assert.Equal(t, expected, msg.MaxPayloadLength(ProtocolVersion))
 }
 
-// TestMsgAuthresp_EncodeDecode_RoundTrip exercises successful encoding and
+// TestMsgAuthrespEncodeDecodeRoundTrip exercises successful encoding and
 // decoding of an auth response.
-func TestMsgAuthresp_EncodeDecode_RoundTrip(t *testing.T) {
+func TestMsgAuthrespEncodeDecodeRoundTrip(t *testing.T) {
 	pubKey := bytes.Repeat([]byte{0x02}, SECP256K1_COMP_PUB_KEY_SIZE_IN_BYTES)
 	sig := bytes.Repeat([]byte{0x03}, SECP256K1_DER_SIGN_MAX_SIZE_IN_BYTES)
 	nonce := uint64(0x0102030405060708)
@@ -53,7 +53,7 @@ func TestMsgAuthresp_EncodeDecode_RoundTrip(t *testing.T) {
 	msg.ClientNonce = nonce
 
 	var want bytes.Buffer
-	require.NoError(t, writeElements(&want, uint32(len(pubKey)), pubKey, nonce, uint32(len(sig)), sig))
+	require.NoError(t, writeElements(&want, uint32(len(pubKey)), pubKey, nonce, uint32(len(sig)), sig)) //nolint:gosec // G115 Conversion
 
 	var buf bytes.Buffer
 	require.NoError(t, msg.BsvEncode(&buf, ProtocolVersion, BaseEncoding))
@@ -75,9 +75,9 @@ func TestMsgAuthresp_EncodeDecode_RoundTrip(t *testing.T) {
 	assert.Equal(t, msg.SignatureLength, decoded.SignatureLength)
 }
 
-// TestMsgAuthresp_EncodeDecode_Errors exercises error paths when encoding or
+// TestMsgAuthrespEncodeDecodeErrors exercises error paths when encoding or
 // decoding auth responses.
-func TestMsgAuthresp_EncodeDecode_Errors(t *testing.T) {
+func TestMsgAuthrespEncodeDecodeErrors(t *testing.T) {
 	pubKey := bytes.Repeat([]byte{0x02}, SECP256K1_COMP_PUB_KEY_SIZE_IN_BYTES)
 	sig := bytes.Repeat([]byte{0x03}, SECP256K1_DER_SIGN_MAX_SIZE_IN_BYTES)
 
@@ -108,11 +108,10 @@ func TestMsgAuthresp_EncodeDecode_Errors(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			err := msg.BsvEncode(newFixedWriter(tc.max), ProtocolVersion, BaseEncoding)
 			require.Error(t, err)
-			assert.ErrorIs(t, err, tc.writeErr)
+			require.ErrorIs(t, err, tc.writeErr)
 
 			var readMsg MsgAuthresp
 			err = readMsg.Bsvdecode(newFixedReader(tc.max, tc.buf), ProtocolVersion, BaseEncoding)
