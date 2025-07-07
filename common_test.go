@@ -432,7 +432,7 @@ func TestVarStringWireErrors(t *testing.T) {
 		{str256, []byte{0xfd}, pver, 2, io.ErrShortWrite, io.ErrUnexpectedEOF},
 	}
 
-	t.Logf("Running %d tests", len(tests))
+	t.Logf(runningTestsFmt, len(tests))
 
 	for i, test := range tests {
 		// Encode to wire format.
@@ -479,7 +479,7 @@ func TestVarStringOverflowErrors(t *testing.T) {
 		},
 	}
 
-	t.Logf("Running %d tests", len(tests))
+	t.Logf(runningTestsFmt, len(tests))
 
 	for i, test := range tests {
 		// Decode from wire format.

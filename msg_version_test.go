@@ -227,7 +227,7 @@ func TestVersionWire(t *testing.T) {
 		},
 	}
 
-	t.Logf("Running %d tests", len(tests))
+	t.Logf(runningTestsFmt, len(tests))
 
 	for i, test := range tests {
 		// Encode the message to wire format.
@@ -344,7 +344,7 @@ func TestVersionWireErrors(t *testing.T) {
 		{exceedUAVer, exceedUAVerEncoded, pver, BaseEncoding, newLen, wireErr, wireErr},
 	}
 
-	t.Logf("Running %d tests", len(tests))
+	t.Logf(runningTestsFmt, len(tests))
 
 	for i, test := range tests {
 		// Encode to wire format.

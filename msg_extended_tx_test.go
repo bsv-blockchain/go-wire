@@ -224,7 +224,7 @@ func TestExtendedTxSerialize(t *testing.T) {
 		},
 	}
 
-	t.Logf("Running %d tests", len(tests))
+	t.Logf(runningTestsFmt, len(tests))
 
 	for i, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -301,7 +301,7 @@ func TestExtendedTxSerializeErrors(t *testing.T) {
 		{multiTx, multiTxEncoded, 206, io.ErrShortWrite, io.EOF},
 	}
 
-	t.Logf("Running %d tests", len(tests))
+	t.Logf(runningTestsFmt, len(tests))
 
 	for i, test := range tests {
 		// Serialize the transaction.
@@ -402,7 +402,7 @@ func TestExtendedTxOverflowErrors(t *testing.T) {
 		},
 	}
 
-	t.Logf("Running %d tests", len(tests))
+	t.Logf(runningTestsFmt, len(tests))
 
 	for i, test := range tests {
 		// Decode from wire format.
@@ -447,7 +447,7 @@ func TestExtendedTxSerializeSizeStripped(t *testing.T) {
 		{multiTx, 210},
 	}
 
-	t.Logf("Running %d tests", len(tests))
+	t.Logf(runningTestsFmt, len(tests))
 
 	for i, test := range tests {
 		serializedSize := test.in.SerializeSize()
