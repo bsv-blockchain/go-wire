@@ -100,7 +100,7 @@ func TestMessage(t *testing.T) {
 		{msgReject, msgReject, pver, MainNet, 79},
 	}
 
-	t.Logf("Running %d tests", len(tests))
+	t.Logf(runningTestsFmt, len(tests))
 
 	for i, test := range tests {
 		// Encode to wire format.
@@ -143,7 +143,7 @@ func TestMessage(t *testing.T) {
 
 	// Do the same thing for Read/WriteMessage, but ignore the bytes since
 	// they don't return them.
-	t.Logf("Running %d tests", len(tests))
+	t.Logf(runningTestsFmt, len(tests))
 
 	for i, test := range tests {
 		// Encode to wire format.
@@ -347,7 +347,7 @@ func TestReadMessageWireErrors(t *testing.T) {
 		},
 	}
 
-	t.Logf("Running %d tests", len(tests))
+	t.Logf(runningTestsFmt, len(tests))
 
 	for i, test := range tests {
 		// Decode from wire format.
@@ -429,7 +429,7 @@ func TestWriteMessageWireErrors(t *testing.T) {
 		{bogusMsg, pver, bsvnet, 28, nil, 28},
 	}
 
-	t.Logf("Running %d tests", len(tests))
+	t.Logf(runningTestsFmt, len(tests))
 
 	for i, test := range tests {
 		// Encode wire format.

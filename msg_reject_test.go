@@ -31,7 +31,7 @@ func TestRejectCodeStringer(t *testing.T) {
 		{0xff, "Unknown RejectCode (255)"},
 	}
 
-	t.Logf("Running %d tests", len(tests))
+	t.Logf(runningTestsFmt, len(tests))
 
 	for i, test := range tests {
 		result := test.in.String()
@@ -292,7 +292,7 @@ func TestRejectWire(t *testing.T) {
 		},
 	}
 
-	t.Logf("Running %d tests", len(tests))
+	t.Logf(runningTestsFmt, len(tests))
 
 	for i, test := range tests {
 		// Encode the message to wire format.
@@ -371,7 +371,7 @@ func TestRejectWireErrors(t *testing.T) {
 		{baseReject, baseRejectEncoded, pverNoReject, BaseEncoding, 6, wireErr, wireErr},
 	}
 
-	t.Logf("Running %d tests", len(tests))
+	t.Logf(runningTestsFmt, len(tests))
 
 	for i, test := range tests {
 		// Encode to wire format.

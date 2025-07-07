@@ -25,7 +25,7 @@ func TestInvTypeStringer(t *testing.T) {
 		{0xffffffff, "Unknown InvType (4294967295)"},
 	}
 
-	t.Logf("Running %d tests", len(tests))
+	t.Logf(runningTestsFmt, len(tests))
 
 	for i, test := range tests {
 		result := test.in.String()
@@ -238,7 +238,7 @@ func TestInvVectWire(t *testing.T) {
 		},
 	}
 
-	t.Logf("Running %d tests", len(tests))
+	t.Logf(runningTestsFmt, len(tests))
 
 	for i, test := range tests {
 		// Encode to wire format.
