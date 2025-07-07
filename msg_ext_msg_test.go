@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TestMsgExtMsgLatest tests the latest version of the MsgExtMsg message type.
 func TestMsgExtMsgLatest(t *testing.T) {
 	const recvLen uint64 = 12345
 	msg := NewMsgExtMsg(recvLen)
@@ -25,6 +26,7 @@ func TestMsgExtMsgLatest(t *testing.T) {
 	require.NoError(t, msg.Bsvdecode(bytes.NewReader(nil), ProtocolVersion, BaseEncoding))
 }
 
+// TestMsgExtMsgCrossProtocol tests the MsgExtMsg message type
 func TestMsgExtMsgCrossProtocol(t *testing.T) {
 	msg := NewMsgExtMsg(1)
 	oldPver := ProtoconfVersion - 1
@@ -33,6 +35,7 @@ func TestMsgExtMsgCrossProtocol(t *testing.T) {
 	require.Error(t, msg.Bsvdecode(bytes.NewReader(nil), oldPver, BaseEncoding))
 }
 
+// TestMsgExtMsgWireErrors tests error handling for MsgExtMsg encoding and decoding.
 func TestMsgExtMsgWireErrors(t *testing.T) {
 	msg := NewMsgExtMsg(1)
 
