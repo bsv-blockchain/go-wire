@@ -10,7 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewMsgGetCFilters_DefaultValues(t *testing.T) {
+// TestNewMsgGetCFiltersDefaultValues tests the creation of a MsgGetCFilters
+func TestNewMsgGetCFiltersDefaultValues(t *testing.T) {
 	pver := ProtocolVersion
 
 	stopHash, err := chainhash.NewHashFromStr("0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f")
@@ -26,7 +27,8 @@ func TestNewMsgGetCFilters_DefaultValues(t *testing.T) {
 	assert.Equal(t, uint64(1+4+chainhash.HashSize), msg.MaxPayloadLength(pver))
 }
 
-func TestMsgGetCFilters_EncodeDecode(t *testing.T) {
+// TestMsgGetCFiltersEncodeDecode tests the encoding and decoding of MsgGetCFilters
+func TestMsgGetCFiltersEncodeDecode(t *testing.T) {
 	pver := ProtocolVersion
 
 	stopHash := chainhash.Hash{}
@@ -40,7 +42,8 @@ func TestMsgGetCFilters_EncodeDecode(t *testing.T) {
 	assert.Equal(t, msg, &decoded)
 }
 
-func TestMsgGetCFilters_EncodeDecodeErrors(t *testing.T) {
+// TestMsgGetCFiltersEncodeDecodeErrors tests the error handling during encoding and decoding
+func TestMsgGetCFiltersEncodeDecodeErrors(t *testing.T) {
 	pver := ProtocolVersion
 	stopHash := chainhash.Hash{}
 	msg := NewMsgGetCFilters(GCSFilterRegular, 1, &stopHash)
