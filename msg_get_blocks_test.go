@@ -16,6 +16,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const errNewHashFromStrFmt = "NewHashFromStr: %v"
+
 // TestGetBlocks tests the MsgGetBlocks API.
 func TestGetBlocks(t *testing.T) {
 	pver := ProtocolVersion
@@ -25,7 +27,7 @@ func TestGetBlocks(t *testing.T) {
 
 	locatorHash, err := chainhash.NewHashFromStr(hashStr)
 	if err != nil {
-		t.Errorf("NewHashFromStr: %v", err)
+		t.Errorf(errNewHashFromStrFmt, err)
 	}
 
 	// Block 100000 hash.
@@ -33,7 +35,7 @@ func TestGetBlocks(t *testing.T) {
 
 	hashStop, err := chainhash.NewHashFromStr(hashStr)
 	if err != nil {
-		t.Errorf("NewHashFromStr: %v", err)
+		t.Errorf(errNewHashFromStrFmt, err)
 	}
 
 	// Ensure we get the same data back out.
@@ -89,7 +91,7 @@ func TestGetBlocksWire(t *testing.T) {
 
 	hashLocator, err := chainhash.NewHashFromStr(hashStr)
 	if err != nil {
-		t.Errorf("NewHashFromStr: %v", err)
+		t.Errorf(errNewHashFromStrFmt, err)
 	}
 
 	// Block 99500 hash.
@@ -97,7 +99,7 @@ func TestGetBlocksWire(t *testing.T) {
 
 	hashLocator2, err := chainhash.NewHashFromStr(hashStr)
 	if err != nil {
-		t.Errorf("NewHashFromStr: %v", err)
+		t.Errorf(errNewHashFromStrFmt, err)
 	}
 
 	// Block 100000 hash.
@@ -105,7 +107,7 @@ func TestGetBlocksWire(t *testing.T) {
 
 	hashStop, err := chainhash.NewHashFromStr(hashStr)
 	if err != nil {
-		t.Errorf("NewHashFromStr: %v", err)
+		t.Errorf(errNewHashFromStrFmt, err)
 	}
 
 	// MsgGetBlocks message with no block locators or stop hash.
@@ -295,7 +297,7 @@ func TestGetBlocksWireErrors(t *testing.T) {
 
 	hashLocator, err := chainhash.NewHashFromStr(hashStr)
 	if err != nil {
-		t.Errorf("NewHashFromStr: %v", err)
+		t.Errorf(errNewHashFromStrFmt, err)
 	}
 
 	// Block 99500 hash.
@@ -303,7 +305,7 @@ func TestGetBlocksWireErrors(t *testing.T) {
 
 	hashLocator2, err := chainhash.NewHashFromStr(hashStr)
 	if err != nil {
-		t.Errorf("NewHashFromStr: %v", err)
+		t.Errorf(errNewHashFromStrFmt, err)
 	}
 
 	// Block 100000 hash.
@@ -311,7 +313,7 @@ func TestGetBlocksWireErrors(t *testing.T) {
 
 	hashStop, err := chainhash.NewHashFromStr(hashStr)
 	if err != nil {
-		t.Errorf("NewHashFromStr: %v", err)
+		t.Errorf(errNewHashFromStrFmt, err)
 	}
 
 	// MsgGetBlocks message with multiple block locators and a stop hash.
