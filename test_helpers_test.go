@@ -41,10 +41,11 @@ func assertWireRoundTrip(t *testing.T, src, dst Message, pver uint32, enc Messag
 // using a fixed-size reader to force errors. It verifies the returned errors
 // match the expected write and read errors respectively.
 func assertWireError(t *testing.T, in, out Message, buf []byte, pver uint32,
-	enc MessageEncoding, max int, wantWriteErr, wantReadErr error) {
+	enc MessageEncoding, maxInt int, wantWriteErr, wantReadErr error,
+) {
 	t.Helper()
 
-	w := newFixedWriter(max)
+	w := newFixedWriter(maxInt)
 	err := in.BsvEncode(w, pver, enc)
 	assert.Equal(t, reflect.TypeOf(wantWriteErr), reflect.TypeOf(err),
 		"unexpected encode error type")
@@ -53,7 +54,7 @@ func assertWireError(t *testing.T, in, out Message, buf []byte, pver uint32,
 		require.ErrorIs(t, err, wantWriteErr)
 	}
 
-	r := newFixedReader(max, buf)
+	r := newFixedReader(maxInt, buf)
 	err = out.Bsvdecode(r, pver, enc)
 	assert.Equal(t, reflect.TypeOf(wantReadErr), reflect.TypeOf(err),
 		"unexpected decode error type")

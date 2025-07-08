@@ -101,7 +101,7 @@ func roundTripElement(t *testing.T, idx int, in interface{}, want []byte) {
 }
 
 // negativeElement forces write/read errors via bounded readers/writers.
-func negativeElement(t *testing.T, idx int, maxInt int, in interface{},
+func negativeElement(t *testing.T, idx, maxInt int, in interface{},
 	wantWrite, wantRead error,
 ) {
 	t.Helper()
