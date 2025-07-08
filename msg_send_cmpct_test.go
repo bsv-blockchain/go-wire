@@ -10,9 +10,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestNewMsgSendcmpct_SetsFields verifies the constructor initializes
+// TestNewMsgSendcmpctSetsFields verifies the constructor initializes
 // the message with the given value and default version.
-func TestNewMsgSendcmpct_SetsFields(t *testing.T) {
+func TestNewMsgSendcmpctSetsFields(t *testing.T) {
 	msg := NewMsgSendcmpct(true)
 
 	assert.True(t, msg.SendCmpct)
@@ -20,21 +20,21 @@ func TestNewMsgSendcmpct_SetsFields(t *testing.T) {
 }
 
 // TestMsgSendcmpct_Command ensures the command string is correct.
-func TestMsgSendcmpct_Command(t *testing.T) {
+func TestMsgSendcmpctCommand(t *testing.T) {
 	msg := NewMsgSendcmpct(false)
 
 	assert.Equal(t, CmdSendcmpct, msg.Command())
 }
 
-// TestMsgSendcmpct_MaxPayloadLength checks the fixed payload size.
-func TestMsgSendcmpct_MaxPayloadLength(t *testing.T) {
+// TestMsgSendcmpctMaxPayloadLength checks the fixed payload size.
+func TestMsgSendcmpctMaxPayloadLength(t *testing.T) {
 	msg := NewMsgSendcmpct(true)
 
 	assert.Equal(t, uint64(9), msg.MaxPayloadLength(ProtocolVersion))
 }
 
-// TestMsgSendcmpct_EncodeDecode exercises encode/decode round trips.
-func TestMsgSendcmpct_EncodeDecode(t *testing.T) {
+// TestMsgSendcmpctEncodeDecode exercises encode/decode round trips.
+func TestMsgSendcmpctEncodeDecode(t *testing.T) {
 	cases := []struct {
 		name      string
 		sendCmpct bool
@@ -64,8 +64,8 @@ func TestMsgSendcmpct_EncodeDecode(t *testing.T) {
 	}
 }
 
-// TestMsgSendcmpct_WireErrors covers error paths during encoding and decoding.
-func TestMsgSendcmpct_WireErrors(t *testing.T) {
+// TestMsgSendcmpctWireErrors covers error paths during encoding and decoding.
+func TestMsgSendcmpctWireErrors(t *testing.T) {
 	base := NewMsgSendcmpct(true)
 	var buf bytes.Buffer
 	require.NoError(t, base.BsvEncode(&buf, ProtocolVersion, BaseEncoding))
