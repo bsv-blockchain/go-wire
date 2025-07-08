@@ -6,7 +6,6 @@ package wire
 
 import (
 	"bytes"
-	"errors"
 	"io"
 	"testing"
 
@@ -208,27 +207,8 @@ func TestPingWireErrors(t *testing.T) {
 
 	t.Logf(runningTestsFmt, len(tests))
 
-	for i, test := range tests {
-		// Encode to wire format.
-		w := newFixedWriter(test.max)
-
-		err := test.in.BsvEncode(w, test.pver, test.enc)
-		if !errors.Is(err, test.writeErr) {
-			t.Errorf("BsvEncode #%d wrong error got: %v, want: %v",
-				i, err, test.writeErr)
-			continue
-		}
-
-		// Decode from wire format.
-		var msg MsgPing
-
-		r := newFixedReader(test.max, test.buf)
-
-		err = msg.Bsvdecode(r, test.pver, test.enc)
-		if !errors.Is(err, test.readErr) {
-			t.Errorf("Bsvdecode #%d wrong error got: %v, want: %v",
-				i, err, test.readErr)
-			continue
-		}
+	for _, test := range tests {
+		assertWireError(t, test.in, &MsgPing{}, test.buf, test.pver,
+			test.enc, test.max, test.writeErr, test.readErr)
 	}
 }

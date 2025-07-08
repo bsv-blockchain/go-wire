@@ -2,6 +2,7 @@ package wire
 
 import (
 	"bytes"
+	"errors"
 	"reflect"
 	"testing"
 
@@ -34,4 +35,29 @@ func assertWireRoundTrip(t *testing.T, src, dst Message, pver uint32, enc Messag
 	require.NoError(t, src.BsvEncode(&buf, pver, enc))
 	require.NoError(t, dst.Bsvdecode(&buf, pver, enc))
 	assert.True(t, reflect.DeepEqual(src, dst), "round trip mismatch")
+}
+
+// assertWireError encodes a message using a fixed-size writer and decodes it
+// using a fixed-size reader to force errors. It verifies the returned errors
+// match the expected write and read errors respectively.
+func assertWireError(t *testing.T, in, out Message, buf []byte, pver uint32,
+	enc MessageEncoding, max int, wantWriteErr, wantReadErr error) {
+	t.Helper()
+
+	w := newFixedWriter(max)
+	err := in.BsvEncode(w, pver, enc)
+	assert.Equal(t, reflect.TypeOf(wantWriteErr), reflect.TypeOf(err),
+		"unexpected encode error type")
+	var msgError *MessageError
+	if !errors.As(err, &msgError) {
+		require.ErrorIs(t, err, wantWriteErr)
+	}
+
+	r := newFixedReader(max, buf)
+	err = out.Bsvdecode(r, pver, enc)
+	assert.Equal(t, reflect.TypeOf(wantReadErr), reflect.TypeOf(err),
+		"unexpected decode error type")
+	if !errors.As(err, &msgError) {
+		require.ErrorIs(t, err, wantReadErr)
+	}
 }
