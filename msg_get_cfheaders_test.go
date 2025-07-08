@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestNewMsgGetCFHeaders_SetsFields ensures the constructor initializes all fields.
-func TestNewMsgGetCFHeaders_SetsFields(t *testing.T) {
+// TestNewMsgGetCFHeadersSetsFields ensures the constructor initializes all fields.
+func TestNewMsgGetCFHeadersSetsFields(t *testing.T) {
 	stopHash, err := chainhash.NewHashFromStr("0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f")
 	require.NoError(t, err)
 
@@ -22,23 +22,23 @@ func TestNewMsgGetCFHeaders_SetsFields(t *testing.T) {
 	assert.True(t, msg.StopHash.IsEqual(stopHash))
 }
 
-// TestMsgGetCFHeaders_Command verifies the command string matches the spec.
-func TestMsgGetCFHeaders_Command(t *testing.T) {
+// TestMsgGetCFHeadersCommand verifies the command string matches the spec.
+func TestMsgGetCFHeadersCommand(t *testing.T) {
 	msg := NewMsgGetCFHeaders(GCSFilterRegular, 0, &chainhash.Hash{})
 
 	assert.Equal(t, CmdGetCFHeaders, msg.Command())
 }
 
-// TestMsgGetCFHeaders_MaxPayloadLength checks the payload size is fixed.
-func TestMsgGetCFHeaders_MaxPayloadLength(t *testing.T) {
+// TestMsgGetCFHeadersMaxPayloadLength checks the payload size is fixed.
+func TestMsgGetCFHeadersMaxPayloadLength(t *testing.T) {
 	msg := NewMsgGetCFHeaders(GCSFilterRegular, 0, &chainhash.Hash{})
 
 	expected := uint64(1 + 4 + chainhash.HashSize)
 	assert.Equal(t, expected, msg.MaxPayloadLength(ProtocolVersion))
 }
 
-// TestMsgGetCFHeaders_EncodeDecode exercises encode/decode round trips.
-func TestMsgGetCFHeaders_EncodeDecode(t *testing.T) {
+// TestMsgGetCFHeadersEncodeDecode exercises encode/decode round trips.
+func TestMsgGetCFHeadersEncodeDecode(t *testing.T) {
 	stopHash, err := chainhash.NewHashFromStr("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
 	require.NoError(t, err)
 
@@ -58,8 +58,8 @@ func TestMsgGetCFHeaders_EncodeDecode(t *testing.T) {
 	assert.Equal(t, msg, &decoded)
 }
 
-// TestMsgGetCFHeaders_WireErrors verifies error paths during encode and decode.
-func TestMsgGetCFHeaders_WireErrors(t *testing.T) {
+// TestMsgGetCFHeadersWireErrors verifies error paths during encode and decode.
+func TestMsgGetCFHeadersWireErrors(t *testing.T) {
 	stopHash := &chainhash.Hash{}
 	baseMsg := NewMsgGetCFHeaders(GCSFilterRegular, 1, stopHash)
 	var baseBuf bytes.Buffer
