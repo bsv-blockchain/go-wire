@@ -18,6 +18,10 @@ import (
 	"github.com/davecgh/go-spew/spew"
 )
 
+// wrongReadErrorFmt is used to compare expected error types when reading
+// messages during tests.
+const wrongReadErrorFmt = "ReadMessage #%d wrong error got: %v <%T>, "
+
 // makeHeader is a convenience function to make a message header in the form of
 // a byte slice.  It is used to force errors when reading messages.
 func makeHeader(bsvnet BitcoinNet, command string,
@@ -355,8 +359,7 @@ func TestReadMessageWireErrors(t *testing.T) {
 
 		nr, _, _, err := ReadMessageN(r, test.pver, test.bsvnet)
 		if reflect.TypeOf(err) != reflect.TypeOf(test.readErr) {
-			t.Errorf("ReadMessage #%d wrong error got: %v <%T>, "+
-				"want: %T", i, err, err, test.readErr)
+			t.Errorf(wrongReadErrorFmt+"want: %T", i, err, err, test.readErr)
 			continue
 		}
 
@@ -371,8 +374,7 @@ func TestReadMessageWireErrors(t *testing.T) {
 		var msgError *MessageError
 		if !errors.As(err, &msgError) {
 			if !errors.Is(err, test.readErr) {
-				t.Errorf("ReadMessage #%d wrong error got: %v <%T>, "+
-					"want: %v <%T>", i, err, err,
+				t.Errorf(wrongReadErrorFmt+"want: %v <%T>", i, err, err,
 					test.readErr, test.readErr)
 
 				continue
@@ -453,8 +455,7 @@ func TestWriteMessageWireErrors(t *testing.T) {
 		var msgError *MessageError
 		if !errors.As(err, &msgError) {
 			if !errors.Is(err, test.err) {
-				t.Errorf("ReadMessage #%d wrong error got: %v <%T>, "+
-					"want: %v <%T>", i, err, err,
+				t.Errorf(wrongReadErrorFmt+"want: %v <%T>", i, err, err,
 					test.err, test.err)
 
 				continue
