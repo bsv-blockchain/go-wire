@@ -101,11 +101,12 @@ Code must be cleanly formatted and pass all linters before being committed.
 ```bash
 go fmt ./...
 goimports -w .
+gofumpt -w ./...
 golangci-lint run
 go vet ./...
 ```
 
-> Refer to `.golangci.json` for the full set of enabled linters.
+> Refer to `.golangci.json` for the full set of enabled linters and formatters.
 
 Editors should honor `.editorconfig` for indentation and whitespace rules, and
 Git respects `.gitattributes` to enforce consistent line endings across
@@ -117,15 +118,17 @@ platforms.
 
 We use the `testify` suite for unit tests. All tests must follow these conventions:
 
-* Name tests using the pattern: `TestFunctionName_ScenarioDescription`
+* Name tests using the pattern: `TestFunctionNameScenarioDescription` (no underscores) (PascalCase)
+* Use `testify` when possible, do not use `testing` directly
 * Use `testify/assert` for general assertions
 * Use `testify/require` for:
-    * All error or nil checks
-    * Any test where failure should halt execution
-    * Any test where a pointer or complex structure is required to be used after the check
+	* All error or nil checks
+	* Any test where failure should halt execution
+	* Any test where a pointer or complex structure is required to be used after the check
 * Use `require.InDelta` or `require.InEpsilon` for floating-point comparisons
-* Prefer **table-driven tests** for clarity and reusability
+* Prefer **table-driven tests** for clarity and reusability, always have a name for each test case
 * Use subtests (`t.Run`) to isolate and describe scenarios
+* If the test is in a test suite, always use the test suite instead of `t` directly
 * **Optionally use** `t.Parallel()` , but try and avoid it unless testing for concurrency issues
 * Avoid flaky, timing-sensitive, or non-deterministic tests
 
@@ -232,7 +235,7 @@ Great engineers write great comments. You're not here to state the obvious—you
 * **Your comments are part of the product**
 
   > Treat them like UX copy. Make them clear, concise, and professional. You're writing for peers, not compilers.
-  
+
 <br/><br/>
 
 ### 🔤 Function Comments (Exported)
@@ -242,11 +245,11 @@ Every exported function **must** include a Go-style comment that:
 * Starts with the function name
 * States its purpose clearly
 * Documents:
-  * **Steps**: Include if the function performs a non-obvious sequence of operations.
-  * **Parameters**: Always describe all parameters when present.
-  * **Return values**: Document return types and their meaning if not trivially understood.
-  * **Side effects**: Note any I/O, database writes, external calls, or mutations that aren't local to the function.
-  * **Notes**: Include any assumptions, constraints, or important context that the caller should know.
+	* **Steps**: Include if the function performs a non-obvious sequence of operations.
+	* **Parameters**: Always describe all parameters when present.
+	* **Return values**: Document return types and their meaning if not trivially understood.
+	* **Side effects**: Note any I/O, database writes, external calls, or mutations that aren't local to the function.
+	* **Notes**: Include any assumptions, constraints, or important context that the caller should know.
 
 Here is a template for function comments that is recommended to use:
 
@@ -283,9 +286,9 @@ Here is a template for function comments that is recommended to use:
 * Each package **must** include a package-level comment in a file named after the package (e.g., `auth.go` for package `auth`).
 * If no logical file fits, add a `doc.go` with the comment block.
 * Use it to explain:
-    * The package purpose
-    * High-level API boundaries
-    * Expected use-cases and design notes
+	* The package purpose
+	* High-level API boundaries
+	* Expected use-cases and design notes
 
 Here is a template for package comments that is recommended to use:
 
@@ -336,9 +339,9 @@ Use inline comments **strategically**, not excessively.
 * Keep your tone **precise, confident, and modern**—you're not writing a novel, but you're also not writing legacy COBOL.
 * Avoid filler like "simple function" or "just does X".
 * Don't leave TODOs unless:
-    * They are immediately actionable
-    * (or) they reference an issue
-    * They include a timestamp or owner
+	* They are immediately actionable
+	* (or) they reference an issue
+	* They include a timestamp or owner
 
 <br/><br/>
 
@@ -394,6 +397,7 @@ Markdown files (e.g., `README.md`, `AGENTS.md`, `CONTRIBUTING.md`) are first-cla
 * Prefer `errors.New()` over `fmt.Errorf`
 * Use custom error types sparingly
 * Avoid returning ambiguous errors; provide context
+* Avoid using `panic` for expected errors; reserve it for unrecoverable situations
 * Use `errors.Unwrap()` to access underlying errors when needed
 * Use `errors.Join()` to combine multiple errors when appropriate
 
@@ -431,6 +435,27 @@ docs(README): improve installation instructions
 ```
 
 > Commits that only tweak whitespace, comments, or docs inside a PR may be squashed; otherwise preserve granular commits.
+
+<br/><br/>
+
+### 📝 Pre-Commit Hooks (Optional)
+To ensure consistent commit messages, we use a pre-commit hook that checks the format before allowing a commit. The hook is defined in `.pre-commit-config.yaml` and can be installed with:
+
+```bash
+pre-commit install
+```
+
+If you don't have `pre-commit` installed, you can install it via Homebrew:
+```bash
+brew install pre-commit
+```
+
+Run the pre-commit hook manually with:
+```bash
+pre-commit run --all-files
+```
+
+> The pre-commit hook will automatically check your commit messages against the defined format and prevent commits that do not comply.
 
 <br/><br/>
 
@@ -542,7 +567,7 @@ We follow **Semantic Versioning (✧ SemVer)**:
 ### 📦 Tooling
 
 * Releases are driven by **[goreleaser]** and configured in `.goreleaser.yml`.
-* Install locally with Homebrew (Mac):  
+* Install locally with Homebrew (Mac):
 ```bash
   brew install goreleaser
 ````
@@ -554,9 +579,8 @@ We follow **Semantic Versioning (✧ SemVer)**:
 | Step | Command                         | Purpose                                                                                            |
 |------|---------------------------------|----------------------------------------------------------------------------------------------------|
 | 1    | `make release-snap`             | Build & upload a **snapshot** (pre‑release) for quick CI validation.                               |
-| 2    | `make tag version=X.Y.Z`        | Create and push a signed Git tag. Triggers GitHub Actions.                                         |
+| 2    | `make tag version=X.Y.Z`        | Create and push a signed Git tag. Triggers GitHub Actions to package the release                   |
 | 3    | GitHub Actions                  | CI runs `goreleaser release` on the tag; artifacts and changelog are published to GitHub Releases. |
-| 4    | `make release` (optional local) | Manually invoke the production release if needed.                                                  |
 
 > **Note for AI Agents:** Do not create or push tags automatically. Only the repository [codeowners](CODEOWNERS) are authorized to tag and publish official releases.
 
@@ -617,11 +641,10 @@ Current labels are located in `.github/labels.yml` and automatically synced into
 
 CI automatically runs on every PR to verify:
 
-* Formatting (`go fmt` and `goimports`)
+* Formatting (`go fmt` and `goimports` and `gofumpt`)
 * Linting (`golangci-lint run`)
 * Tests (`go test ./...`)
 * Fuzz tests (if applicable) (`make run-fuzz-tests`)
-* Pre‑commit hooks (`pre-commit install && pre-commit run --files <files>`) keep local commits aligned with CI
 * This codebase uses GitHub Actions; test workflows reside in `.github/workflows/run-tests.yml`
 * Pin each external GitHub Action to a **full commit SHA** (e.g., `actions/checkout@2f3b4a2e0e471e13e2ea2bc2a350e888c9cf9b75`) as recommended by GitHub's [security hardening guidance](https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-pinned-actions). Dependabot will track and update these pinned versions automatically.
 
@@ -666,9 +689,15 @@ Dependency hygiene is critical for security, reproducibility, and developer expe
   govulncheck ./...
 ```
 
-* Run via make command: 
+* Run via make command:
 ```bash
   make govulncheck
+```
+
+* Run [gitleaks](https://github.com/gitleaks/gitleaks) before committing code to detect hardcoded secrets or sensitive data in the repository:
+```bash
+brew install gitleaks
+gitleaks detect --source . --log-opts="--all" --verbose
 ```
 
 * Address critical advisories before merging changes into `master`
@@ -700,9 +729,9 @@ Security is a first-class requirement. If you discover a vulnerability—no matt
 * **Do not** open a public issue or pull request.
 * Follow the instructions in [`SECURITY.md`](SECURITY.md).
 * Include:
-  * A clear, reproducible description of the issue
-  * Proof‑of‑concept code or steps (if possible)
-  * Any known mitigations or workarounds
+	* A clear, reproducible description of the issue
+	* Proof‑of‑concept code or steps (if possible)
+	* Any known mitigations or workarounds
 * You will receive an acknowledgment within **72 hours** and status updates until the issue is resolved.
 
 > For general hardening guidance (e.g., `govulncheck`, dependency pinning), see the [🔐Dependency Management](#-dependency-management) section.
@@ -715,7 +744,7 @@ Security is a first-class requirement. If you discover a vulnerability—no matt
 
 ## 🕓 Change Log (AGENTS.md)
 
-This section tracks notable updates to `AGENTS.md`, including the date, author, and purpose of each revision. 
+This section tracks notable updates to `AGENTS.md`, including the date, author, and purpose of each revision.
 All contributors are expected to append entries here when making meaningful changes to agent behavior, conventions, or policies.
 
 
