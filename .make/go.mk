@@ -40,6 +40,12 @@ coverage: ## Show test coverage
 	@echo "Generating coverage report..."
 	@go test -coverprofile=coverage.out ./... $(TAGS) && go tool cover -func=coverage.out
 
+.PHONY: fumpt
+fumpt: ## Run fumpt to format Go code
+	@echo "Running fumpt..."
+	@go install mvdan.cc/gofumpt@latest
+	@gofumpt -w -extra .
+
 .PHONY: generate
 generate: ## Run go generate in the base of the repo
 	@echo "Running go generate..."
@@ -78,7 +84,7 @@ lint: ## Run the golangci-lint application (install if not found)
 			GOPATH=$$(go env GOPATH); \
 			if [ -z "$$GOPATH" ]; then GOPATH=$$HOME/go; fi; \
 			echo "Installation path: $$GOPATH/bin"; \
-			curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$GOPATH/bin v2.2.0; \
+			curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$GOPATH/bin v2.2.1; \
 		fi; \
 	fi; \
 	if [ "$(TRAVIS)" != "" ]; then \
