@@ -8,10 +8,10 @@ import (
 	"bytes"
 	"errors"
 	"io"
-	"reflect"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestPing tests the MsgPing API against the latest protocol version.
@@ -32,20 +32,13 @@ func TestPing(t *testing.T) {
 
 	// Ensure the command is expected value.
 	wantCmd := "ping"
-	if cmd := msg.Command(); cmd != wantCmd {
-		t.Errorf("NewMsgPing: wrong command - got %v want %v",
-			cmd, wantCmd)
-	}
+	assertCommand(t, msg, wantCmd)
 
 	// Ensure max payload is expected value for the latest protocol version.
 	wantPayload := uint64(8)
-	maxPayload := msg.MaxPayloadLength(pver)
+	assertMaxPayload(t, msg, pver, wantPayload)
 
-	if maxPayload != wantPayload {
-		t.Errorf("MaxPayloadLength: wrong max payload length for "+
-			"protocol version %d - got %v, want %v", pver,
-			maxPayload, wantPayload)
-	}
+	assertWireRoundTrip(t, msg, NewMsgPing(0), pver, BaseEncoding)
 }
 
 // TestPingBIP0031 tests the MsgPing API against the protocol version
@@ -177,37 +170,13 @@ func TestPingWire(t *testing.T) {
 	t.Logf(runningTestsFmt, len(tests))
 
 	for i, test := range tests {
-		// Encode the message to wire format.
+		if test.in.Nonce == test.out.Nonce {
+			assertWireRoundTrip(t, &test.in, &test.out, test.pver, test.enc)
+		}
+
 		var buf bytes.Buffer
-
-		err := test.in.BsvEncode(&buf, test.pver, test.enc)
-		if err != nil {
-			t.Errorf("BsvEncode #%d error %v", i, err)
-			continue
-		}
-
-		if !bytes.Equal(buf.Bytes(), test.buf) {
-			t.Errorf("BsvEncode #%d\n got: %s want: %s", i,
-				spew.Sdump(buf.Bytes()), spew.Sdump(test.buf))
-			continue
-		}
-
-		// Decode the message from wire format.
-		var msg MsgPing
-
-		rbuf := bytes.NewReader(test.buf)
-
-		err = msg.Bsvdecode(rbuf, test.pver, test.enc)
-		if err != nil {
-			t.Errorf("Bsvdecode #%d error %v", i, err)
-			continue
-		}
-
-		if !reflect.DeepEqual(msg, test.out) {
-			t.Errorf("Bsvdecode #%d\n got: %s want: %s", i,
-				spew.Sdump(msg), spew.Sdump(test.out))
-			continue
-		}
+		require.NoError(t, test.in.BsvEncode(&buf, test.pver, test.enc))
+		assert.True(t, bytes.Equal(buf.Bytes(), test.buf), "test %d encode mismatch", i)
 	}
 }
 

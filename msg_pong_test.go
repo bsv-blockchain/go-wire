@@ -11,7 +11,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestPongLatest tests the MsgPong API against the latest protocol version.
@@ -32,41 +33,13 @@ func TestPongLatest(t *testing.T) {
 
 	// Ensure the command is expected value.
 	wantCmd := "pong"
-	if cmd := msg.Command(); cmd != wantCmd {
-		t.Errorf("NewMsgPong: wrong command - got %v want %v",
-			cmd, wantCmd)
-	}
+	assertCommand(t, msg, wantCmd)
 
 	// Ensure max payload is expected value for the latest protocol version.
 	wantPayload := uint64(8)
-	maxPayload := msg.MaxPayloadLength(pver)
+	assertMaxPayload(t, msg, pver, wantPayload)
 
-	if maxPayload != wantPayload {
-		t.Errorf("MaxPayloadLength: wrong max payload length for "+
-			"protocol version %d - got %v, want %v", pver,
-			maxPayload, wantPayload)
-	}
-
-	// Test encode with latest protocol version.
-	var buf bytes.Buffer
-
-	err = msg.BsvEncode(&buf, pver, enc)
-	if err != nil {
-		t.Errorf("encode of MsgPong failed %v err <%v>", msg, err)
-	}
-
-	// Test decode with latest protocol version.
-	readmsg := NewMsgPong(0)
-
-	err = readmsg.Bsvdecode(&buf, pver, enc)
-	if err != nil {
-		t.Errorf("decode of MsgPong failed [%v] err <%v>", buf, err)
-	}
-
-	// Ensure nonce is the same.
-	if msg.Nonce != readmsg.Nonce {
-		t.Errorf("Should get same nonce for protocol version %d", pver)
-	}
+	assertWireRoundTrip(t, msg, NewMsgPong(0), pver, enc)
 }
 
 // TestPongBIP0031 tests the MsgPong API against the protocol version
@@ -108,7 +81,7 @@ func TestPongBIP0031(t *testing.T) {
 	err = readmsg.Bsvdecode(&buf, pver, enc)
 	if err == nil {
 		t.Errorf("decode of MsgPong succeeded when it shouldn't have %v",
-			spew.Sdump(buf))
+			buf.Bytes())
 	}
 
 	// Since this protocol version doesn't support pong, make sure the
@@ -187,37 +160,13 @@ func TestPongWire(t *testing.T) {
 	t.Logf(runningTestsFmt, len(tests))
 
 	for i, test := range tests {
-		// Encode the message to wire format.
+		if test.in.Nonce == test.out.Nonce {
+			assertWireRoundTrip(t, &test.in, &test.out, test.pver, test.enc)
+		}
+
 		var buf bytes.Buffer
-
-		err := test.in.BsvEncode(&buf, test.pver, test.enc)
-		if err != nil {
-			t.Errorf("BsvEncode #%d error %v", i, err)
-			continue
-		}
-
-		if !bytes.Equal(buf.Bytes(), test.buf) {
-			t.Errorf("BsvEncode #%d\n got: %s want: %s", i,
-				spew.Sdump(buf.Bytes()), spew.Sdump(test.buf))
-			continue
-		}
-
-		// Decode the message from wire format.
-		var msg MsgPong
-
-		rbuf := bytes.NewReader(test.buf)
-
-		err = msg.Bsvdecode(rbuf, test.pver, test.enc)
-		if err != nil {
-			t.Errorf("Bsvdecode #%d error %v", i, err)
-			continue
-		}
-
-		if !reflect.DeepEqual(msg, test.out) {
-			t.Errorf("Bsvdecode #%d\n got: %s want: %s", i,
-				spew.Sdump(msg), spew.Sdump(test.out))
-			continue
-		}
+		require.NoError(t, test.in.BsvEncode(&buf, test.pver, test.enc))
+		assert.True(t, bytes.Equal(buf.Bytes(), test.buf), "test %d encode mismatch", i)
 	}
 }
 
