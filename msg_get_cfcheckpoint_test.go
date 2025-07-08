@@ -10,7 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewMsgGetCFCheckpt_InitializesFields(t *testing.T) {
+// TestNewMsgGetCFCheckptInitializesFields ensures the constructor initializes all fields.
+func TestNewMsgGetCFCheckptInitializesFields(t *testing.T) {
 	stop := &chainhash.Hash{}
 	msg := NewMsgGetCFCheckpt(GCSFilterRegular, stop)
 
@@ -18,18 +19,21 @@ func TestNewMsgGetCFCheckpt_InitializesFields(t *testing.T) {
 	assert.Equal(t, *stop, msg.StopHash)
 }
 
-func TestMsgGetCFCheckpt_Command(t *testing.T) {
+// TestMsgGetCFCheckptCommand verifies the command string matches the spec.
+func TestMsgGetCFCheckptCommand(t *testing.T) {
 	msg := &MsgGetCFCheckpt{}
 	assert.Equal(t, CmdGetCFCheckpt, msg.Command())
 }
 
-func TestMsgGetCFCheckpt_MaxPayloadLength(t *testing.T) {
+// TestMsgGetCFCheckptMaxPayloadLength checks the payload size is fixed.
+func TestMsgGetCFCheckptMaxPayloadLength(t *testing.T) {
 	msg := &MsgGetCFCheckpt{}
 	expected := uint64(1 + chainhash.HashSize)
 	assert.Equal(t, expected, msg.MaxPayloadLength(ProtocolVersion))
 }
 
-func TestMsgGetCFCheckpt_EncodeDecode(t *testing.T) {
+// TestMsgGetCFCheckptEncodeDecode exercises encode/decode round trips.
+func TestMsgGetCFCheckptEncodeDecode(t *testing.T) {
 	hashStr := "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"
 	stopHash, err := chainhash.NewHashFromStr(hashStr)
 	require.NoError(t, err)
@@ -47,7 +51,8 @@ func TestMsgGetCFCheckpt_EncodeDecode(t *testing.T) {
 	assert.Equal(t, msg, &decoded)
 }
 
-func TestMsgGetCFCheckpt_EncodeDecodeErrors(t *testing.T) {
+// TestMsgGetCFCheckptEncodeDecodeErrors tests the error handling during encoding and decoding.
+func TestMsgGetCFCheckptEncodeDecodeErrors(t *testing.T) {
 	stop := &chainhash.Hash{}
 	msg := NewMsgGetCFCheckpt(GCSFilterRegular, stop)
 
@@ -73,13 +78,13 @@ func TestMsgGetCFCheckpt_EncodeDecodeErrors(t *testing.T) {
 			w := newFixedWriter(tc.max)
 			err := msg.BsvEncode(w, ProtocolVersion, BaseEncoding)
 			require.Error(t, err)
-			assert.ErrorIs(t, err, tc.writeErr)
+			require.ErrorIs(t, err, tc.writeErr)
 
 			r := newFixedReader(tc.max, encoded)
 			var decoded MsgGetCFCheckpt
 			err = decoded.Bsvdecode(r, ProtocolVersion, BaseEncoding)
 			require.Error(t, err)
-			assert.ErrorIs(t, err, tc.readErr)
+			require.ErrorIs(t, err, tc.readErr)
 		})
 	}
 }
