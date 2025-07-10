@@ -8,8 +8,8 @@ Need help with **go-wire**? You're in the right place. Here’s how to get suppo
 
 Before asking, check the existing threads:
 
-* 🔍 Search [Discussions](https://github.com/bsv-blockchain/go-wire/discussions)
-* 🆕 Can’t find what you need? Start a new topic and ask away!
+* 🔍 Search [Issues](https://github.com/bsv-blockchain/go-wire/issues) or [Pull Requests](https://github.com/bsv-blockchain/go-wire/pulls?q=is%3Apr+is%3Aopen+is%3Aclosed)
+* 🆕 Can’t find what you need? Start a [new issue](https://github.com/bsv-blockchain/go-wire/issues/new?template=question.yml).
 
 <br/>
 
@@ -46,8 +46,8 @@ Everything from commit rules to contributor expectations is in [AGENTS.md](./AGE
 ## 📬 Private Contact
 
 For sensitive or non-public concerns, reach out to:
-📧 [security@bitcoinsv.io](mailto:security@bitcoinsv.io)
+📧 [security@bsvassociation.org](mailto:security@bsvassociation.org)
 
 <br/>
 
-Thanks for your interest and support — we’re here to help, and we appreciate your contributions. 🚀
+Thanks for your interest and support - we're here to help, and we appreciate your contributions. 🚀
