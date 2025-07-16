@@ -262,7 +262,7 @@ This magical file controls everything from:
 | Workflow Name                                                                      | Description                                                                                                            |
 |------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------|
 | [auto-merge-on-approval.yml](.github/workflows/auto-merge-on-approval.yml)         | Automatically merges PRs after approval and all required checks, following strict rules.                               |
-| [codeql.yml](.github/workflows/codeql-analysis.yml)                                         | Analyzes code for security vulnerabilities using [GitHub CodeQL](https://codeql.github.com/).                          |
+| [codeql.yml](.github/workflows/codeql-analysis.yml)                                | Analyzes code for security vulnerabilities using [GitHub CodeQL](https://codeql.github.com/).                          |
 | [dependabot-auto-merge.yml](.github/workflows/dependabot-auto-merge.yml)           | Automatically merges [Dependabot](https://github.com/dependabot) PRs that meet all requirements.                       |
 | [fortress.yml](.github/workflows/fortress.yml)                                     | Runs the GoFortress security and testing workflow, including linting, testing, releasing, and vulnerability checks.    |
 | [pull-request-management.yml](.github/workflows/pull-request-management.yml)       | Labels PRs by branch prefix, assigns a default user if none is assigned, and welcomes new contributors with a comment. |
