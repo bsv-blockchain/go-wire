@@ -93,7 +93,7 @@ func TestMsgSendcmpctWireErrors(t *testing.T) {
 			var msg MsgSendcmpct
 			err = msg.Bsvdecode(r, ProtocolVersion, BaseEncoding)
 			if errors.As(tt.readErr, &wireErr) {
-				assert.IsType(t, tt.readErr, err)
+				assert.ErrorAs(t, err, &wireErr)
 			} else {
 				require.ErrorIs(t, err, tt.readErr)
 			}

@@ -110,7 +110,7 @@ func TestMsgAuthchWireErrors(t *testing.T) {
 				require.Error(t, err)
 				var mErr *MessageError
 				if errors.As(tt.readErr, &mErr) {
-					assert.IsType(t, mErr, err)
+					assert.ErrorAs(t, err, &mErr)
 				} else {
 					assert.ErrorIs(t, err, tt.readErr)
 				}
