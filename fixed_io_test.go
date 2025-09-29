@@ -30,7 +30,7 @@ func (w *fixedWriter) Write(p []byte) (n int, err error) {
 	n = lenp
 	w.pos += copy(w.b[w.pos:], p)
 
-	return
+	return n, err
 }
 
 // Bytes return the bytes already written to the fixed writer.
@@ -64,7 +64,7 @@ func (fr *fixedReader) Read(p []byte) (n int, err error) {
 	n, err = fr.iobuf.Read(p)
 	fr.pos += n
 
-	return
+	return n, err
 }
 
 // newFixedReader returns a new io.Reader that will error once more bytes than
