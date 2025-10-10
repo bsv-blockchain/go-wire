@@ -44,16 +44,11 @@
         "disable": [
             "gocritic",
             "godot",
-            "gochecknoglobals",
-            "godox",
-            "funcorder",
-            "gocognit",
-            "gocyclo",
             "wsl_v5"
         ],
         "enable": [
-            "arangolint",
             "asasalint",
+            "arangolint",
             "asciicheck",
             "bidichk",
             "bodyclose",
@@ -70,10 +65,15 @@
             "errorlint",
             "exhaustive",
             "forbidigo",
+            "funcorder",
             "gocheckcompilerdirectives",
+            "gochecknoglobals",
             "gochecknoinits",
             "gochecksumtype",
+            "gocognit",
             "goconst",
+            "gocyclo",
+            "godox",
             "goheader",
             "gomoddirectives",
             "gosec",
@@ -215,6 +215,9 @@
     },
     "run": {
         "allow-parallel-runners": true,
+        "build-tags": [
+            "mage"
+        ],
         "concurrency": 8,
         "issues-exit-code": 1,
         "tests": true

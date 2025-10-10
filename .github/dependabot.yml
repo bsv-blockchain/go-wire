@@ -1,9 +1,9 @@
 # ────────────────────────────────────────────────────────────────
 # Dependabot Configuration
-# Repo: bsv-blockchain/<repo>
+# Repo: mrz1836/<repo>
 #
 # Purpose:
-#   • Keep Go modules, GitHub Actions, and DevContainer images/features
+#   • Keep Go modules, GitHub Actions and DevContainer images/features
 #     base images up‑to‑date with zero‑day security patches and semantic‑version
 #     upgrades.
 #   • Reduce attack surface by limiting outdated dependencies.
@@ -22,7 +22,9 @@
 #   • PR limit = 10 to avoid queue flooding.
 #   • All dependency PRs require passing CI + CODEOWNERS review.
 # ────────────────────────────────────────────────────────────────
+
 version: 2
+
 updates:
   # ──────────────────────────────────────────────────────────────
   # 1. Go Modules (go.mod / go.sum)
@@ -47,11 +49,12 @@ updates:
           - "*oauth*"
         update-types: ["minor", "patch"]
     open-pull-requests-limit: 10
-    assignees: ["galt-tr", "mrz1836"]
+    assignees: ["mrz1836"]
     labels: ["chore", "dependencies", "gomod"]
     commit-message:
       prefix: "chore"
       include: "scope"
+
   # ──────────────────────────────────────────────────────────────
   # 2. GitHub Actions Workflows
   # ──────────────────────────────────────────────────────────────
@@ -69,11 +72,12 @@ updates:
       ghactions-all:
         patterns: ["*"]
     open-pull-requests-limit: 10
-    assignees: ["galt-tr", "mrz1836"]
+    assignees: ["mrz1836"]
     labels: ["chore", "dependencies", "github-actions"]
     commit-message:
       prefix: "chore"
       include: "scope"
+
   # ──────────────────────────────────────────────────────────────
   # 3. DevContainer (devcontainer.json : base image + features)
   # ──────────────────────────────────────────────────────────────
@@ -91,7 +95,7 @@ updates:
       devcontainer-all:
         patterns: ["*"]
     open-pull-requests-limit: 5
-    assignees: ["galt-tr", "mrz1836"]
+    assignees: ["mrz1836"]
     labels: ["chore", "dependencies", "devcontainer"]
     commit-message:
       prefix: "chore"

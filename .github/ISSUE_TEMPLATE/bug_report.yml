@@ -3,7 +3,7 @@ description: Report incorrect behavior, test failure, or unexpected output in th
 title: "[Bug] <brief description of the issue>"
 labels: ["bug-p3"]
 assignees:
-  - icellan
+  - mrz1836
 body:
   - type: textarea
     id: bug_description
@@ -13,6 +13,7 @@ body:
       placeholder: The custom function strips the plus sign from numbers...
     validations:
       required: true
+
   - type: textarea
     id: reproduction_steps
     attributes:
@@ -23,6 +24,7 @@ body:
         2. Observe that the result is "input" (missing 'symbol')
     validations:
       required: true
+
   - type: textarea
     id: expected_behavior
     attributes:
@@ -31,17 +33,19 @@ body:
       placeholder: I expected the result to be "symbol+input" since the plus sign is allowed.
     validations:
       required: true
+
   - type: textarea
     id: environment
     attributes:
       label: Environment details
       description: Provide version information and your Go setup to help debug.
       placeholder: |
-        - Go version: go1.22.2
+        - Go version: go1.24.3
         - OS: macOS 14.5 (arm64)
         - Library version/commit: v1.3.4 or commit 88aef9c
     validations:
       required: false
+
   - type: textarea
     id: additional_context
     attributes:
