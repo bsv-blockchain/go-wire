@@ -1,4 +1,4 @@
-# 🔌 go-wire
+# 🛜 go-wire
 > BSV Blockchain Wire Protocol
 
 <table>
