@@ -44,6 +44,11 @@
         "disable": [
             "gocritic",
             "godot",
+            "funcorder",
+            "gochecknoglobals",
+            "gocognit",
+            "gocyclo",
+            "godox",
             "wsl_v5"
         ],
         "enable": [
@@ -65,15 +70,10 @@
             "errorlint",
             "exhaustive",
             "forbidigo",
-            "funcorder",
             "gocheckcompilerdirectives",
-            "gochecknoglobals",
             "gochecknoinits",
             "gochecksumtype",
-            "gocognit",
             "goconst",
-            "gocyclo",
-            "godox",
             "goheader",
             "gomoddirectives",
             "gosec",
