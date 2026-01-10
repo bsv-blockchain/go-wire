@@ -50,7 +50,7 @@ func TestMsgSendcmpctEncodeDecode(t *testing.T) {
 			var b bytes.Buffer
 			require.NoError(t, msg.BsvEncode(&b, ProtocolVersion, BaseEncoding))
 
-			expected := []byte{0x00}
+			expected := make([]byte, 1, 9)
 			if tt.sendCmpct {
 				expected[0] = 0x01
 			}
