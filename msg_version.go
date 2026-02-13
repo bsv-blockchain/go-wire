@@ -54,6 +54,12 @@ type MsgVersion struct {
 
 	// Don't announce transactions to peer.
 	DisableRelayTx bool
+
+	// AssociationID identifies a multistream association. When present, it
+	// indicates the peer supports the multistreams protocol. Format is
+	// [type_byte][uuid_bytes] (typically 17 bytes: 0x01 + 16-byte UUID).
+	// Empty/nil means no multistream support (legacy single-stream mode).
+	AssociationID []byte
 }
 
 // HasService returns whether the specified service is supported by the peer
@@ -150,6 +156,15 @@ func (msg *MsgVersion) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding) er
 		msg.DisableRelayTx = !relayTx
 	}
 
+	// AssociationID is appended after the relay field by peers that support
+	// the multistreams protocol. It is optional and backward compatible.
+	if buf.Len() > 0 {
+		msg.AssociationID, err = ReadVarBytes(buf, pver, MaxAssociationIDLen, "AssociationID")
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -202,6 +217,14 @@ func (msg *MsgVersion) BsvEncode(w io.Writer, pver uint32, _ MessageEncoding) er
 		}
 	}
 
+	// Write AssociationID if present (multistreams support).
+	if len(msg.AssociationID) > 0 {
+		err = WriteVarBytes(w, pver, msg.AssociationID)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -214,13 +237,12 @@ func (msg *MsgVersion) Command() string {
 // MaxPayloadLength returns the maximum length the payload can be for the
 // receiver.  This is part of the Message interface implementation.
 func (msg *MsgVersion) MaxPayloadLength(pver uint32) uint64 {
-	// XXX: <= 106 different
 	// Protocol version 4 bytes + services 8 bytes + timestamp 8 bytes +
 	// remote and local net addresses + nonce 8 bytes + length of user
 	// agent (varInt) + max allowed useragent length + last block 4 bytes +
-	// relay transactions flag 1 byte.
+	// relay transactions flag 1 byte + varint(assoc_id_len) + max assoc ID.
 	return 33 + (maxNetAddressPayload(pver) * 2) + MaxVarIntPayload +
-		MaxUserAgentLen
+		MaxUserAgentLen + MaxVarIntPayload + MaxAssociationIDLen
 }
 
 // NewMsgVersion returns a new bitcoin version message that conforms to the

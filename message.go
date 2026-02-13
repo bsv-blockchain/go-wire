@@ -85,6 +85,8 @@ const (
 	CmdSendcmpct    = "sendcmpct"
 	CmdAuthch       = "authch"
 	CmdAuthresp     = "authresp"
+	CmdCreateStream = "createstrm"
+	CmdStreamAck    = "streamack"
 )
 
 // MessageEncoding represents the wire message encoding format to be used.
@@ -215,6 +217,12 @@ func makeEmptyMessage(command string) (Message, error) {
 
 	case CmdSendcmpct:
 		msg = &MsgSendcmpct{}
+
+	case CmdCreateStream:
+		msg = &MsgCreateStream{}
+
+	case CmdStreamAck:
+		msg = &MsgStreamAck{}
 
 	default:
 		return nil, fmt.Errorf("unhandled command [%s]: %#v", command, msg) //nolint:err113 // needs refactoring
