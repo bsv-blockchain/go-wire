@@ -119,8 +119,8 @@ func TestVersion(t *testing.T) {
 	// Protocol version 4 bytes + services 8 bytes + timestamp 8 bytes +
 	// remote and local net addresses + nonce 8 bytes + length of user agent
 	// (varInt) + max allowed user agent length and last block 4 bytes +
-	// relay transactions flag 1 byte.
-	wantPayload := uint64(358)
+	// relay transactions flag 1 byte + varint(assoc_id_len) + max assoc ID.
+	wantPayload := uint64(358 + MaxVarIntPayload + MaxAssociationIDLen)
 	maxPayload := msg.MaxPayloadLength(pver)
 
 	if maxPayload != wantPayload {
@@ -592,4 +592,72 @@ var baseVersionBIP0037Encoded = []byte{
 	0x74, 0x3a, 0x30, 0x2e, 0x30, 0x2e, 0x31, 0x2f, // User agent
 	0xfa, 0x92, 0x03, 0x00, // Last block
 	0x01, // Relay tx
+}
+
+// TestVersionAssociationID tests that AssociationID is correctly encoded and
+// decoded in the version message, and that backward compatibility is maintained
+// when AssociationID is not present.
+func TestVersionAssociationID(t *testing.T) {
+	pver := ProtocolVersion
+	enc := BaseEncoding
+
+	// Create a version with AssociationID.
+	tcpAddrMe := &net.TCPAddr{IP: net.ParseIP("127.0.0.1"), Port: 8333}
+	me := NewNetAddress(tcpAddrMe, SFNodeNetwork)
+	tcpAddrYou := &net.TCPAddr{IP: net.ParseIP("192.168.0.1"), Port: 8333}
+	you := NewNetAddress(tcpAddrYou, SFNodeNetwork)
+	msg := NewMsgVersion(me, you, 123123, 234234)
+	msg.AssociationID = []byte{0x01, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
+		0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0x00}
+
+	// Encode.
+	var buf bytes.Buffer
+	require.NoError(t, msg.BsvEncode(&buf, pver, enc))
+
+	// Decode.
+	var decoded MsgVersion
+	rbuf := bytes.NewBuffer(buf.Bytes())
+	require.NoError(t, decoded.Bsvdecode(rbuf, pver, enc))
+
+	require.Equal(t, msg.AssociationID, decoded.AssociationID)
+}
+
+// TestVersionWithoutAssociationID ensures backward compatibility when
+// AssociationID is not present in the version message.
+func TestVersionWithoutAssociationID(t *testing.T) {
+	pver := ProtocolVersion
+	enc := BaseEncoding
+
+	tcpAddrMe := &net.TCPAddr{IP: net.ParseIP("127.0.0.1"), Port: 8333}
+	me := NewNetAddress(tcpAddrMe, SFNodeNetwork)
+	tcpAddrYou := &net.TCPAddr{IP: net.ParseIP("192.168.0.1"), Port: 8333}
+	you := NewNetAddress(tcpAddrYou, SFNodeNetwork)
+	msg := NewMsgVersion(me, you, 123123, 234234)
+	// No AssociationID set.
+
+	var buf bytes.Buffer
+	require.NoError(t, msg.BsvEncode(&buf, pver, enc))
+
+	var decoded MsgVersion
+	rbuf := bytes.NewBuffer(buf.Bytes())
+	require.NoError(t, decoded.Bsvdecode(rbuf, pver, enc))
+
+	require.Nil(t, decoded.AssociationID)
+}
+
+// TestVersionDecodeOldFormatWithAssocID ensures that a version message
+// encoded in the old format (BIP0037 with relay flag but no AssociationID)
+// can still be decoded.
+func TestVersionDecodeOldFormatWithAssocID(t *testing.T) {
+	pver := ProtocolVersion
+	enc := BaseEncoding
+
+	// Decode a standard BIP0037 encoded version (with relay tx but no assoc ID).
+	var decoded MsgVersion
+	rbuf := bytes.NewBuffer(baseVersionBIP0037Encoded)
+	require.NoError(t, decoded.Bsvdecode(rbuf, pver, enc))
+
+	require.Nil(t, decoded.AssociationID)
+	require.Equal(t, baseVersionBIP0037.ProtocolVersion, decoded.ProtocolVersion)
+	require.Equal(t, baseVersionBIP0037.UserAgent, decoded.UserAgent)
 }
