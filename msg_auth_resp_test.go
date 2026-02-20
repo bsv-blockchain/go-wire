@@ -18,9 +18,9 @@ func TestNewMsgAuthrespInitializesFields(t *testing.T) {
 
 	msg := NewMsgAuthresp(pubKey, sig)
 
-	assert.Equal(t, uint32(len(pubKey)), msg.PublicKeyLength) //nolint:gosec // G115 Conversion
+	assert.Equal(t, uint32(len(pubKey)), msg.PublicKeyLength)
 	assert.Equal(t, pubKey, msg.PublicKey)
-	assert.Equal(t, uint32(len(sig)), msg.SignatureLength) //nolint:gosec // G115 Conversion
+	assert.Equal(t, uint32(len(sig)), msg.SignatureLength)
 	assert.Equal(t, sig, msg.Signature)
 	assert.NotZero(t, msg.ClientNonce)
 }
@@ -37,7 +37,7 @@ func TestMsgAuthrespCommandReturnsAuthresp(t *testing.T) {
 // computation.
 func TestMsgAuthrespMaxPayloadLengthCalculatesLimit(t *testing.T) {
 	msg := &MsgAuthresp{}
-	expected := uint64(4 + SECP256K1_COMP_PUB_KEY_SIZE_IN_BYTES + 8 + 4 + SECP256K1_DER_SIGN_MAX_SIZE_IN_BYTES) //nolint:gosec // G115 Conversion
+	expected := uint64(4 + SECP256K1_COMP_PUB_KEY_SIZE_IN_BYTES + 8 + 4 + SECP256K1_DER_SIGN_MAX_SIZE_IN_BYTES)
 
 	assert.Equal(t, expected, msg.MaxPayloadLength(ProtocolVersion))
 }
@@ -53,7 +53,7 @@ func TestMsgAuthrespEncodeDecodeRoundTrip(t *testing.T) {
 	msg.ClientNonce = nonce
 
 	var want bytes.Buffer
-	require.NoError(t, writeElements(&want, uint32(len(pubKey)), pubKey, nonce, uint32(len(sig)), sig)) //nolint:gosec // G115 Conversion
+	require.NoError(t, writeElements(&want, uint32(len(pubKey)), pubKey, nonce, uint32(len(sig)), sig))
 
 	var buf bytes.Buffer
 	require.NoError(t, msg.BsvEncode(&buf, ProtocolVersion, BaseEncoding))

@@ -122,7 +122,7 @@ func readBlockHeader(r io.Reader, _ uint32, bh *BlockHeader) error {
 // encoding block headers to be stored to disk, such as in a database, as
 // opposed to encoding for the wire.
 func writeBlockHeader(w io.Writer, _ uint32, bh *BlockHeader) error {
-	sec := uint32(bh.Timestamp.Unix()) //nolint:gosec // G115 Conversion
+	sec := uint32(bh.Timestamp.Unix())
 	return writeElements(w, bh.Version, &bh.PrevBlock, &bh.MerkleRoot,
 		sec, bh.Bits, bh.Nonce)
 }

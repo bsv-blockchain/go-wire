@@ -122,7 +122,6 @@ func (msg *MsgFilterLoad) MaxPayloadLength(_ uint32) uint64 {
 	// Num filter bytes (varInt) + filter + 4 bytes hash funcs +
 	// 4 bytes tweak + 1 byte flags.
 
-	//nolint:gosec // G115 Conversion
 	return uint64(VarIntSerializeSize(MaxFilterLoadFilterSize)) +
 		MaxFilterLoadFilterSize + 9
 }

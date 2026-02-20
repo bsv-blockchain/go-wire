@@ -147,6 +147,11 @@
                     "ATTENTION"
                 ]
             },
+            "gosec": {
+                "excludes": [
+                    "G115"
+                ]
+            },
             "govet": {
                 "enable": [
                     "atomicalign",

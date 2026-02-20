@@ -84,7 +84,7 @@ func NewNetAddressTimestamp(
 // NewNetAddress returns a new NetAddress using the provided TCP address and
 // supported services with defaults for the remaining fields.
 func NewNetAddress(addr *net.TCPAddr, services ServiceFlag) *NetAddress {
-	return NewNetAddressIPPort(addr.IP, uint16(addr.Port), services) //nolint:gosec // G115 conversion
+	return NewNetAddressIPPort(addr.IP, uint16(addr.Port), services)
 }
 
 // readNetAddress reads an encoded NetAddress from r depending on the protocol
@@ -131,7 +131,7 @@ func writeNetAddress(w io.Writer, pver uint32, na *NetAddress, ts bool) error {
 	// stop working somewhere around 2106.  Also timestamp wasn't added until
 	// until protocol version >= NetAddressTimeVersion.
 	if ts && pver >= NetAddressTimeVersion {
-		err := writeElement(w, uint32(na.Timestamp.Unix())) //nolint:gosec // G115 Conversion
+		err := writeElement(w, uint32(na.Timestamp.Unix()))
 		if err != nil {
 			return err
 		}

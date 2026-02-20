@@ -33,7 +33,7 @@ func (msg *MsgAuthresp) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding) e
 		return err
 	}
 
-	msg.PublicKeyLength = uint32(len(msg.PublicKey)) //nolint:gosec // G115 Conversion
+	msg.PublicKeyLength = uint32(len(msg.PublicKey))
 
 	// Read stop hash
 	err = readElement(r, &msg.ClientNonce)
@@ -46,7 +46,7 @@ func (msg *MsgAuthresp) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding) e
 		return err
 	}
 
-	msg.SignatureLength = uint32(len(msg.Signature)) //nolint:gosec // G115 Conversion
+	msg.SignatureLength = uint32(len(msg.Signature))
 
 	return nil
 }
@@ -66,7 +66,6 @@ func (msg *MsgAuthresp) Command() string {
 // MaxPayloadLength returns the maximum length the payload can be for the
 // receiver.  This is part of the Message interface implementation.
 func (msg *MsgAuthresp) MaxPayloadLength(_ uint32) uint64 {
-	//nolint:gosec // G115 Conversion
 	return uint64(4 + SECP256K1_COMP_PUB_KEY_SIZE_IN_BYTES + 8 + 4 + SECP256K1_DER_SIGN_MAX_SIZE_IN_BYTES)
 }
 
@@ -75,10 +74,10 @@ func NewMsgAuthresp(publickKey, signature []byte) *MsgAuthresp {
 	nonce, _ := RandomUint64()
 
 	return &MsgAuthresp{
-		PublicKeyLength: uint32(len(publickKey)), //nolint:gosec // G115 Conversion
+		PublicKeyLength: uint32(len(publickKey)),
 		PublicKey:       publickKey,
 		ClientNonce:     nonce,
-		SignatureLength: uint32(len(signature)), //nolint:gosec // G115 Conversion
+		SignatureLength: uint32(len(signature)),
 		Signature:       signature,
 	}
 }

@@ -32,7 +32,7 @@ func TestMsgAuthchWire(t *testing.T) {
 	require.NoError(t, decoded.Bsvdecode(&buf, ProtocolVersion, BaseEncoding))
 
 	assert.Equal(t, orig.Version, decoded.Version)
-	assert.Equal(t, uint32(len(decoded.Challenge)), decoded.Length) //nolint:gosec // G115 Conversion
+	assert.Equal(t, uint32(len(decoded.Challenge)), decoded.Length)
 	assert.NotEmpty(t, decoded.Challenge)
 }
 

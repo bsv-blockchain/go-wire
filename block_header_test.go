@@ -20,7 +20,7 @@ func TestBlockHeader(t *testing.T) {
 		t.Errorf("RandomUint64: Error generating nonce: %v", err)
 	}
 
-	nonce := uint32(nonce64) //nolint:gosec // G115 Conversion
+	nonce := uint32(nonce64)
 
 	hash := mainNetGenesisHash
 	merkleHash := mainNetGenesisMerkleRoot
