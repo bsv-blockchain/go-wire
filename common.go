@@ -211,7 +211,7 @@ func readElement(r io.Reader, element interface{}) error {
 			return err
 		}
 
-		*e = int32(rv) //nolint:gosec // G115 Conversion
+		*e = int32(rv)
 
 		return nil
 
@@ -231,7 +231,7 @@ func readElement(r io.Reader, element interface{}) error {
 			return err
 		}
 
-		*e = int64(rv) //nolint:gosec // G115 Conversion
+		*e = int64(rv)
 
 		return nil
 
@@ -277,7 +277,7 @@ func readElement(r io.Reader, element interface{}) error {
 			return err
 		}
 
-		*e = int64Time(time.Unix(int64(rv), 0)) //nolint:gosec // G115 Conversion
+		*e = int64Time(time.Unix(int64(rv), 0))
 
 		return nil
 
@@ -391,7 +391,7 @@ func writeElement(w io.Writer, element interface{}) error {
 	// type assertions first.
 	switch e := element.(type) {
 	case int32:
-		err := binarySerializer.PutUint32(w, littleEndian, uint32(e)) //nolint:gosec // G115 Conversion
+		err := binarySerializer.PutUint32(w, littleEndian, uint32(e))
 		if err != nil {
 			return err
 		}
@@ -407,7 +407,7 @@ func writeElement(w io.Writer, element interface{}) error {
 		return nil
 
 	case int64:
-		err := binarySerializer.PutUint64(w, littleEndian, uint64(e)) //nolint:gosec // G115 Conversion
+		err := binarySerializer.PutUint64(w, littleEndian, uint64(e))
 		if err != nil {
 			return err
 		}
@@ -613,7 +613,7 @@ func WriteVarInt(w io.Writer, _ uint32, val uint64) error {
 			return err
 		}
 
-		return binarySerializer.PutUint16(w, littleEndian, uint16(val)) //nolint:gosec // G115 Conversion
+		return binarySerializer.PutUint16(w, littleEndian, uint16(val))
 	}
 
 	if val <= math.MaxUint32 {
@@ -622,7 +622,7 @@ func WriteVarInt(w io.Writer, _ uint32, val uint64) error {
 			return err
 		}
 
-		return binarySerializer.PutUint32(w, littleEndian, uint32(val)) //nolint:gosec // G115 Conversion
+		return binarySerializer.PutUint32(w, littleEndian, uint32(val))
 	}
 
 	err := binarySerializer.PutUint8(w, 0xff)

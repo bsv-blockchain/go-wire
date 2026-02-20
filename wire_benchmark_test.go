@@ -452,7 +452,7 @@ func BenchmarkDecodeHeaders(b *testing.B) {
 			b.Fatalf("NewHashFromStr: unexpected error: %v", err)
 		}
 
-		_ = m.AddBlockHeader(NewBlockHeader(1, hash, hash, 0, uint32(i))) //nolint:gosec // G115 Conversion
+		_ = m.AddBlockHeader(NewBlockHeader(1, hash, hash, 0, uint32(i)))
 	}
 
 	// Serialize it so the bytes are available to test the decode below.
@@ -642,7 +642,7 @@ func BenchmarkDecodeMerkleBlock(b *testing.B) {
 		_ = m.AddTxHash(hash)
 
 		if i%8 == 0 {
-			m.Flags = append(m.Flags, uint8(i)) //nolint:gosec // G115 Conversion
+			m.Flags = append(m.Flags, uint8(i))
 		}
 	}
 
