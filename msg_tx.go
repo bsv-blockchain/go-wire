@@ -594,7 +594,8 @@ func (msg *MsgTx) bsvdecodeWithScratch(r io.Reader, pver uint32, inCount uint64,
 			return err
 		}
 
-		scriptLen, err := ReadVarInt(r, pver)
+		var scriptLen uint64
+		scriptLen, err = ReadVarInt(r, pver)
 		if err != nil {
 			return err
 		}
