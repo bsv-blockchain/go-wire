@@ -6,6 +6,7 @@ package wire
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"fmt"
 	"io"
 
@@ -70,14 +71,13 @@ func (msg *MsgExtendedTx) AddTxOut(to *TxOut) {
 
 // TxHash generates the Hash for the transaction.
 func (msg *MsgExtendedTx) TxHash() chainhash.Hash {
-	// Encode the transaction and calculate double sha256 on the result.
-	// Ignore the error returns since the only way the encode could fail
-	// is being out of memory or due to nil pointers, both of which would
-	// cause a run-time panic.
-	buf := bytes.NewBuffer(make([]byte, 0, msg.SerializeSize()))
-	_ = msg.Serialize(buf)
-
-	return chainhash.DoubleHashH(buf.Bytes())
+	// Serialize directly into a SHA-256 hasher to avoid allocating an
+	// intermediate buffer. Double SHA-256 is computed as sha256(sha256(tx)).
+	h := sha256.New()
+	_ = msg.Serialize(h)
+	var first [32]byte
+	h.Sum(first[:0])
+	return chainhash.Hash(sha256.Sum256(first[:]))
 }
 
 // Copy creates a deep copy of a transaction so that the original does not get

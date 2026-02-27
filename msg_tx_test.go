@@ -131,6 +131,8 @@ func TestTx(t *testing.T) {
 
 	// Ensure the copy produced an identical transaction message.
 	newMsg := msg.Copy()
+	msg.cachedHash = nil // Clear cache for comparison; Copy() doesn't copy it
+	newMsg.cachedHash = nil
 	if !reflect.DeepEqual(newMsg, msg) {
 		t.Errorf("Copy: mismatched tx messages - got %v, want %v",
 			spew.Sdump(newMsg), spew.Sdump(msg))
@@ -374,6 +376,8 @@ func TestTxWire(t *testing.T) {
 			continue
 		}
 
+		msg.cachedHash = nil
+		test.out.cachedHash = nil
 		if !reflect.DeepEqual(&msg, test.out) {
 			t.Errorf("Bsvdecode #%d\n got: %s want: %s", i,
 				spew.Sdump(&msg), spew.Sdump(test.out))
@@ -515,6 +519,8 @@ func TestTxSerialize(t *testing.T) {
 			continue
 		}
 
+		tx.cachedHash = nil
+		test.out.cachedHash = nil
 		if !reflect.DeepEqual(&tx, test.out) {
 			t.Errorf("Deserialize #%d\n got: %s want: %s", i,
 				spew.Sdump(&tx), spew.Sdump(test.out))
