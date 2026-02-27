@@ -249,41 +249,32 @@ func NewTxOut(value int64, pkScript []byte) *TxOut {
 // Use the AddTxIn and AddTxOut functions to build up the list of transaction
 // inputs and outputs.
 type MsgTx struct {
-	Version    int32
-	TxIn       []*TxIn
-	TxOut      []*TxOut
-	LockTime   uint32
-	cachedHash *chainhash.Hash // lazily computed and cached tx hash
+	Version  int32
+	TxIn     []*TxIn
+	TxOut    []*TxOut
+	LockTime uint32
 }
 
 // AddTxIn adds a transaction input to the message.
 func (msg *MsgTx) AddTxIn(ti *TxIn) {
 	msg.TxIn = append(msg.TxIn, ti)
-	msg.cachedHash = nil
 }
 
 // AddTxOut adds a transaction output to the message.
 func (msg *MsgTx) AddTxOut(to *TxOut) {
 	msg.TxOut = append(msg.TxOut, to)
-	msg.cachedHash = nil
 }
 
-// TxHash generates the Hash for the transaction. The result is cached so that
-// subsequent calls do not re-serialize the transaction.
+// TxHash generates the Hash for the transaction by serializing directly into
+// a SHA-256 hasher, avoiding intermediate buffer allocations.
 func (msg *MsgTx) TxHash() chainhash.Hash {
-	if msg.cachedHash != nil {
-		return *msg.cachedHash
-	}
-
 	// Serialize directly into a SHA-256 hasher to avoid allocating an
 	// intermediate buffer. Double SHA-256 is computed as sha256(sha256(tx)).
 	h := sha256.New()
 	_ = msg.Serialize(h)
 	var first [32]byte
 	h.Sum(first[:0])
-	hash := chainhash.Hash(sha256.Sum256(first[:]))
-	msg.cachedHash = &hash
-	return hash
+	return chainhash.Hash(sha256.Sum256(first[:]))
 }
 
 // Copy creates a deep copy of a transaction so that the original does not get
