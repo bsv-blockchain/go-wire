@@ -16,6 +16,14 @@ import (
 	"github.com/davecgh/go-spew/spew"
 )
 
+// clearBlockTxCaches clears cached hashes on all transactions in a block
+// so that reflect.DeepEqual comparisons are not affected by cache state.
+func clearBlockTxCaches(b *MsgBlock) {
+	for _, tx := range b.Transactions {
+		tx.cachedHash = nil
+	}
+}
+
 // TestBlock tests the MsgBlock API.
 func TestBlock(t *testing.T) {
 	pver := ProtocolVersion
@@ -57,6 +65,8 @@ func TestBlock(t *testing.T) {
 	tx := blockOne.Transactions[0].Copy()
 	_ = msg.AddTransaction(tx)
 
+	clearBlockTxCaches(msg)
+	clearBlockTxCaches(&blockOne)
 	if !reflect.DeepEqual(msg.Transactions, blockOne.Transactions) {
 		t.Errorf("AddTransaction: wrong transactions - got %v, want %v",
 			spew.Sdump(msg.Transactions),
@@ -207,6 +217,8 @@ func TestBlockWire(t *testing.T) {
 			continue
 		}
 
+		clearBlockTxCaches(&msg)
+		clearBlockTxCaches(test.out)
 		if !reflect.DeepEqual(&msg, test.out) {
 			t.Errorf("Bsvdecode #%d\n got: %s want: %s", i,
 				spew.Sdump(&msg), spew.Sdump(test.out))
@@ -322,6 +334,8 @@ func TestBlockSerialize(t *testing.T) {
 			continue
 		}
 
+		clearBlockTxCaches(&block)
+		clearBlockTxCaches(test.out)
 		if !reflect.DeepEqual(&block, test.out) {
 			t.Errorf("Deserialize #%d\n got: %s want: %s", i,
 				spew.Sdump(&block), spew.Sdump(test.out))
@@ -340,6 +354,8 @@ func TestBlockSerialize(t *testing.T) {
 			continue
 		}
 
+		clearBlockTxCaches(&txLocBlock)
+		clearBlockTxCaches(test.out)
 		if !reflect.DeepEqual(&txLocBlock, test.out) {
 			t.Errorf("DeserializeTxLoc #%d\n got: %s want: %s", i,
 				spew.Sdump(&txLocBlock), spew.Sdump(test.out))

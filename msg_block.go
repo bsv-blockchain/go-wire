@@ -83,17 +83,21 @@ func (msg *MsgBlock) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) er
 		return messageError("MsgBlock.Bsvdecode", str)
 	}
 
-	msg.Transactions = make([]*MsgTx, 0, txCount)
+	// Pre-allocate all MsgTx structs contiguously and use a shared scratch
+	// buffer for reading script data across all transactions, avoiding a
+	// fresh heap allocation per large script.
+	txs := make([]MsgTx, txCount)
+	msg.Transactions = make([]*MsgTx, txCount)
+
+	var scratch []byte
 
 	for i := uint64(0); i < txCount; i++ {
-		tx := MsgTx{}
+		msg.Transactions[i] = &txs[i]
 
-		err := tx.Bsvdecode(r, pver, enc)
+		err := txs[i].bsvdecode(r, pver, enc, &scratch)
 		if err != nil {
 			return err
 		}
-
-		msg.Transactions = append(msg.Transactions, &tx)
 	}
 
 	return nil
