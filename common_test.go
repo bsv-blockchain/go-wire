@@ -59,7 +59,7 @@ func (r *fakeRandReader) Read(p []byte) (int, error) {
 
 // ptrFor ensures we have a pointer to the concrete value behind v.
 func ptrFor(v interface{}) interface{} {
-	if reflect.TypeOf(v).Kind() == reflect.Ptr {
+	if reflect.TypeOf(v).Kind() == reflect.Pointer {
 		return v
 	}
 	return reflect.New(reflect.TypeOf(v)).Interface()
@@ -67,7 +67,7 @@ func ptrFor(v interface{}) interface{} {
 
 // deref returns the concrete value behind a pointer (or v if already concrete).
 func deref(v interface{}) interface{} {
-	if reflect.TypeOf(v).Kind() == reflect.Ptr {
+	if reflect.TypeOf(v).Kind() == reflect.Pointer {
 		return reflect.Indirect(reflect.ValueOf(v)).Interface()
 	}
 	return v
