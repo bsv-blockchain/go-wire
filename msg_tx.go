@@ -352,13 +352,12 @@ func (msg *MsgTx) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) error
 	return msg.bsvdecode(r, pver, enc, nil)
 }
 
-// bsvdecode is the internal deserialization implementation. When largeBuf is
-// non-nil, it is used as a reusable scratch buffer for scripts larger than
-// the scriptFreeList threshold (512 bytes). This avoids a fresh heap
-// allocation per large script when decoding many transactions (e.g., a block).
-// The caller (MsgBlock.Bsvdecode) passes a shared buffer that persists across
-// all transactions in the block.
-func (msg *MsgTx) bsvdecode(r io.Reader, pver uint32, _ MessageEncoding, largeBuf *[]byte) error {
+// bsvdecode is the internal deserialization implementation. When arena is
+// non-nil (block-level decoding), each script is read directly into an arena
+// slice, eliminating the per-tx heap allocation and memcpy of the old scratch
+// approach. When arena is nil (single-tx decoding), the traditional scriptPool
+// path is used unchanged.
+func (msg *MsgTx) bsvdecode(r io.Reader, pver uint32, _ MessageEncoding, arena *blockArena) error {
 	version, err := binarySerializer.Uint32(r, littleEndian)
 	if err != nil {
 		return err
@@ -405,17 +404,12 @@ func (msg *MsgTx) bsvdecode(r io.Reader, pver uint32, _ MessageEncoding, largeBu
 		}
 	}
 
-	// When largeBuf is provided (block-level decoding), all scripts are read
-	// into a single scratch buffer that's reused across transactions. The
-	// buffer grows to accommodate each tx's total script data, then is reset
-	// (len=0, cap preserved) for the next tx. This avoids a fresh heap
-	// allocation per large script (scripts >512 bytes bypass the pool in
-	// scriptFreeList.Borrow), saving ~3.7 GB for a 3.6 GB block.
-	//
-	// When largeBuf is nil (single-tx decoding), the traditional script pool
-	// approach is used for backward compatibility.
-	if largeBuf != nil {
-		return msg.bsvdecodeWithScratch(r, pver, count, largeBuf)
+	// When arena is provided (block-level decoding), each script is read
+	// directly into an arena slice. No intermediate scratch buffer, no
+	// per-tx copy. When arena is nil (single-tx decoding), the traditional
+	// scriptPool path is used unchanged.
+	if arena != nil {
+		return msg.bsvdecodeWithArena(r, pver, count, arena)
 	}
 
 	// Deserialize the inputs using script pool (single-tx path).
@@ -505,25 +499,16 @@ func (msg *MsgTx) bsvdecode(r io.Reader, pver uint32, _ MessageEncoding, largeBu
 	return nil
 }
 
-// bsvdecodeWithScratch deserializes a transaction using a shared scratch
-// buffer for reading script data, avoiding per-script heap allocations.
-// All scripts are read into scratch at successive offsets, then copied
-// into an exact-size contiguous buffer. The scratch buffer persists
-// across transactions when called from MsgBlock.Bsvdecode.
-func (msg *MsgTx) bsvdecodeWithScratch(r io.Reader, pver uint32, inCount uint64, scratch *[]byte) error {
-	// Reset scratch length but keep capacity from previous tx.
-	*scratch = (*scratch)[:0]
-
-	type scriptRef struct {
-		offset int
-		length int
-	}
-
-	// Read each input script into scratch.
+// bsvdecodeWithArena deserializes a transaction using the block-scoped arena
+// allocator. Each script is read directly from r into an arena.Alloc slice,
+// which becomes the final SignatureScript / PkScript with no intermediate
+// copy. The arena ensures:
+//   - Stable slices: previously returned slices are never invalidated.
+//   - cap == len on every script slice.
+//   - Oversize scripts (> blockArenaChunkSize) get a private chunk.
+func (msg *MsgTx) bsvdecodeWithArena(r io.Reader, pver uint32, inCount uint64, arena *blockArena) error {
 	txIns := make([]TxIn, inCount)
 	msg.TxIn = make([]*TxIn, inCount)
-	sigRefs := make([]scriptRef, inCount)
-	var totalScriptSize uint64
 
 	for i := uint64(0); i < inCount; i++ {
 		ti := &txIns[i]
@@ -542,21 +527,19 @@ func (msg *MsgTx) bsvdecodeWithScratch(r io.Reader, pver uint32, inCount uint64,
 		if scriptLen > maxTxInPerMessage() {
 			str := fmt.Sprintf("transaction input signature script is larger than the max allowed size "+
 				"[count %d, max %d]", scriptLen, maxTxInPerMessage())
-			return messageError("MsgTx.bsvdecodeWithScratch", str)
+			return messageError("MsgTx.bsvdecodeWithArena", str)
 		}
 
-		start := len(*scratch)
-		*scratch = growSlice(*scratch, int(scriptLen))
-		_, err = io.ReadFull(r, (*scratch)[start:start+int(scriptLen)])
-		if err != nil {
-			return err
+		// Alloc returns nil for scriptLen==0, which is valid (empty script).
+		s := arena.Alloc(int(scriptLen))
+		if scriptLen > 0 {
+			if _, err = io.ReadFull(r, s); err != nil {
+				return err
+			}
 		}
+		ti.SignatureScript = s
 
-		sigRefs[i] = scriptRef{offset: start, length: int(scriptLen)}
-		totalScriptSize += scriptLen
-
-		err = readElement(r, &ti.Sequence)
-		if err != nil {
+		if err = readElement(r, &ti.Sequence); err != nil {
 			return err
 		}
 	}
@@ -569,19 +552,17 @@ func (msg *MsgTx) bsvdecodeWithScratch(r io.Reader, pver uint32, inCount uint64,
 	if outCount > maxTxOutPerMessage() {
 		str := fmt.Sprintf("too many output transactions to fit into "+
 			"max message size [count %d, max %d]", outCount, maxTxOutPerMessage())
-		return messageError("MsgTx.bsvdecodeWithScratch", str)
+		return messageError("MsgTx.bsvdecodeWithArena", str)
 	}
 
 	txOuts := make([]TxOut, outCount)
 	msg.TxOut = make([]*TxOut, outCount)
-	pkRefs := make([]scriptRef, outCount)
 
 	for i := uint64(0); i < outCount; i++ {
 		to := &txOuts[i]
 		msg.TxOut[i] = to
 
-		err = readElement(r, &to.Value)
-		if err != nil {
+		if err = readElement(r, &to.Value); err != nil {
 			return err
 		}
 
@@ -594,68 +575,20 @@ func (msg *MsgTx) bsvdecodeWithScratch(r io.Reader, pver uint32, inCount uint64,
 		if scriptLen > maxMessagePayload() {
 			str := fmt.Sprintf("transaction output public key script is larger than the max allowed size "+
 				"[count %d, max %d]", scriptLen, maxMessagePayload())
-			return messageError("MsgTx.bsvdecodeWithScratch", str)
+			return messageError("MsgTx.bsvdecodeWithArena", str)
 		}
 
-		start := len(*scratch)
-		*scratch = growSlice(*scratch, int(scriptLen))
-		_, err = io.ReadFull(r, (*scratch)[start:start+int(scriptLen)])
-		if err != nil {
-			return err
+		s := arena.Alloc(int(scriptLen))
+		if scriptLen > 0 {
+			if _, err = io.ReadFull(r, s); err != nil {
+				return err
+			}
 		}
-
-		pkRefs[i] = scriptRef{offset: start, length: int(scriptLen)}
-		totalScriptSize += scriptLen
+		to.PkScript = s
 	}
 
 	msg.LockTime, err = binarySerializer.Uint32(r, littleEndian)
-	if err != nil {
-		return err
-	}
-
-	// Copy all scripts from scratch into an exact-size contiguous buffer.
-	var offset uint64
-
-	scripts := make([]byte, totalScriptSize)
-
-	for i := range msg.TxIn {
-		ref := sigRefs[i]
-		copy(scripts[offset:], (*scratch)[ref.offset:ref.offset+ref.length])
-
-		end := offset + uint64(ref.length)
-		msg.TxIn[i].SignatureScript = scripts[offset:end:end]
-		offset += uint64(ref.length)
-	}
-
-	for i := range msg.TxOut {
-		ref := pkRefs[i]
-		copy(scripts[offset:], (*scratch)[ref.offset:ref.offset+ref.length])
-
-		end := offset + uint64(ref.length)
-		msg.TxOut[i].PkScript = scripts[offset:end:end]
-		offset += uint64(ref.length)
-	}
-
-	return nil
-}
-
-// growSlice extends buf by n bytes, growing the underlying array with
-// amortized-doubling when capacity is insufficient.
-func growSlice(buf []byte, n int) []byte {
-	needed := len(buf) + n
-	if needed <= cap(buf) {
-		return buf[:needed]
-	}
-
-	newCap := cap(buf) * 2
-	if newCap < needed {
-		newCap = needed
-	}
-
-	newBuf := make([]byte, needed, newCap)
-	copy(newBuf, buf)
-
-	return newBuf
+	return err
 }
 
 // Deserialize decodes a transaction from r into the receiver using a format
