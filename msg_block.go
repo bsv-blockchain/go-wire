@@ -83,18 +83,19 @@ func (msg *MsgBlock) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) er
 		return messageError("MsgBlock.Bsvdecode", str)
 	}
 
-	// Pre-allocate all MsgTx structs contiguously and use a shared scratch
-	// buffer for reading script data across all transactions, avoiding a
-	// fresh heap allocation per large script.
+	// Pre-allocate all MsgTx structs contiguously and use a block-scoped
+	// arena allocator for script bytes. The arena eliminates the per-tx
+	// contiguous copy that the old scratch-buffer approach required, and
+	// returns stable slices (cap==len) directly into fixed chunks.
 	txs := make([]MsgTx, txCount)
 	msg.Transactions = make([]*MsgTx, txCount)
 
-	var scratch []byte
+	arena := newBlockArena()
 
 	for i := uint64(0); i < txCount; i++ {
 		msg.Transactions[i] = &txs[i]
 
-		err := txs[i].bsvdecode(r, pver, enc, &scratch)
+		err := txs[i].bsvdecode(r, pver, enc, arena)
 		if err != nil {
 			return err
 		}
