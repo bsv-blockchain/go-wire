@@ -6,8 +6,10 @@ package wire
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"errors"
 	"fmt"
+	"hash"
 	"io"
 	"math"
 	"unicode/utf8"
@@ -520,6 +522,187 @@ func ReadMessageWithEncodingN(r io.Reader, pver uint32, bsvnet BitcoinNet, enc M
 	}
 
 	return totalBytes, msg, payload, nil
+}
+
+// ReadMessageStreamingN reads, validates, and parses the next bitcoin Message
+// from r without allocating a payload buffer for the entire message body.
+// It is the streaming counterpart to ReadMessageWithEncodingN, designed for
+// large messages such as fat blocks where a full payload allocation would cause
+// severe memory pressure.
+//
+// The function signature intentionally omits the []byte payload return of
+// ReadMessageWithEncodingN; callers that need the raw bytes should continue to
+// use ReadMessageWithEncodingN.
+//
+// Behavior differences from ReadMessageWithEncodingN:
+//
+//  1. Payload is NOT buffered. Instead, r is wrapped in an io.LimitedReader
+//     bounded to the declared payload length, and passed directly to
+//     msg.Bsvdecode. The underlying reader r is advanced by exactly the
+//     declared length regardless of success or error (see point 3).
+//
+//  2. Checksum is verified incrementally. For messages on the checksummed path
+//     (length != 0xffffffff && hdr.extLength == 0) the reader is additionally
+//     wrapped in io.TeeReader feeding a sha256.Hash. After Bsvdecode returns,
+//     the double-SHA256 checksum is computed over the tee'd bytes and compared
+//     against the header checksum field. Mismatch returns a *MessageError with
+//     the same "payload checksum failed" text as ReadMessageWithEncodingN.
+//
+//  3. Stream alignment is guaranteed. Any unread bytes from the bounded reader
+//     are drained via io.Copy(io.Discard, ...) in a deferred call so that r is
+//     always positioned at the next message header on return, even when
+//     Bsvdecode returns early or the checksum fails.
+//
+//  4. External handlers registered via SetExternalHandler take priority over
+//     the streaming path. When a handler is registered for the message command,
+//     it is invoked and its (n, Message, error) values are returned directly.
+//     The []byte return from the handler signature is dropped.
+//
+//  5. CmdVersion ("version") is explicitly rejected. MsgVersion.Bsvdecode
+//     type-asserts its reader argument to *bytes.Buffer. Passing a generic
+//     io.Reader would cause an immediate error or panic. Callers that need to
+//     decode version messages must use ReadMessageWithEncodingN.
+func ReadMessageStreamingN(r io.Reader, pver uint32, bsvnet BitcoinNet, enc MessageEncoding) (int, Message, error) {
+	totalBytes := 0
+	n, hdr, err := readMessageHeader(r)
+	totalBytes += n
+
+	if err != nil {
+		return totalBytes, nil, err
+	}
+
+	// Enforce maximum message payload.
+	if uint64(hdr.length) > maxMessagePayload() || hdr.extLength > maxMessagePayload() {
+		str := fmt.Sprintf("message payload is too large - header "+
+			"indicates %d bytes (%d extended bytes), but max message payload is %d "+
+			"bytes.", hdr.length, hdr.extLength, maxMessagePayload())
+
+		return totalBytes, nil, messageError("ReadMessage", str)
+	}
+
+	// Check for messages from the wrong bitcoin network.
+	if hdr.magic != bsvnet {
+		discardInput(r, uint64(hdr.length))
+		str := fmt.Sprintf("message from other network [%v]", hdr.magic)
+
+		return totalBytes, nil, messageError("ReadMessage", str)
+	}
+
+	// Check for malformed commands.
+	command := hdr.command
+	if !utf8.ValidString(command) {
+		discardInput(r, uint64(hdr.length))
+
+		str := fmt.Sprintf("invalid command %v", []byte(command))
+
+		return totalBytes, nil, messageError("ReadMessage", str)
+	}
+
+	// Reject CmdVersion explicitly. MsgVersion.Bsvdecode type-asserts its
+	// reader to *bytes.Buffer; streaming a generic io.Reader into it returns
+	// an immediate error. Callers needing version message decoding must use
+	// ReadMessageWithEncodingN, which buffers the full payload.
+	if command == CmdVersion {
+		discardInput(r, uint64(hdr.length))
+		str := "ReadMessageStreamingN does not support CmdVersion; " +
+			"use ReadMessageWithEncodingN for version messages"
+
+		return totalBytes, nil, messageError("ReadMessage", str)
+	}
+
+	// Create struct of the appropriate message type based on the command.
+	msg, err := makeEmptyMessage(command)
+	if err != nil {
+		discardInput(r, uint64(hdr.length))
+
+		return totalBytes, nil, messageError("ReadMessage", err.Error())
+	}
+
+	// Check for maximum length based on the message type.
+	mpl := msg.MaxPayloadLength(pver)
+	if uint64(hdr.length) > mpl || hdr.extLength > mpl {
+		discardInput(r, uint64(hdr.length))
+		str := fmt.Sprintf("payload exceeds max length - header "+
+			"indicates %v bytes (%v extended bytes), but max payload size for "+
+			"messages of type [%v] is %v.", hdr.length, hdr.extLength, command, mpl)
+
+		return totalBytes, nil, messageError("ReadMessage", str)
+	}
+
+	// Determine effective payload length.
+	length := uint64(hdr.length)
+	if length == 0xffffffff {
+		length = hdr.extLength
+	}
+
+	// Delegate to external handler if one is registered.
+	if externalHandler[command] != nil {
+		n, extMsg, _, extErr := externalHandler[command](r, length, totalBytes)
+		return n, extMsg, extErr
+	}
+
+	// Determine whether this message uses the checksummed path. Extended
+	// format messages (length == 0xffffffff in the raw header || extLength != 0)
+	// do not carry a meaningful checksum.
+	verifyChecksum := length != 0xffffffff && hdr.extLength == 0
+
+	// Bind reads from r to the declared payload length. limited.N starts at
+	// int64(length) and decrements with each read; (length - limited.N) gives
+	// the exact bytes consumed from r at any point.
+	limited := &io.LimitedReader{R: r, N: int64(length)}
+
+	// For checksummed messages, tee all bytes read through a SHA-256 hasher
+	// so we can compute the double-hash after Bsvdecode completes.
+	// h is nil when checksum verification is not needed.
+	var h hash.Hash
+	var src io.Reader = limited
+
+	if verifyChecksum {
+		h = sha256.New()
+		src = io.TeeReader(limited, h)
+	}
+
+	// Drain any unread payload bytes from limited (not src, to avoid double
+	// accounting in the hasher) so r is positioned at the next message header
+	// on all return paths, including error paths.
+	defer func() {
+		_, _ = io.Copy(io.Discard, limited)
+	}()
+
+	if err = msg.Bsvdecode(src, pver, enc); err != nil {
+		totalBytes += int(int64(length) - limited.N)
+		return totalBytes, nil, err
+	}
+
+	// Drain remaining bytes through src (tee'd into h) so all payload bytes
+	// are included in the checksum, even if Bsvdecode did not consume them all.
+	if _, copyErr := io.Copy(io.Discard, src); copyErr != nil && !errors.Is(copyErr, io.EOF) {
+		totalBytes += int(int64(length) - limited.N)
+		return totalBytes, nil, copyErr
+	}
+
+	// At this point limited.N should be 0 (all bytes consumed via src).
+	// The deferred drain on limited is a no-op.
+	totalBytes += int(length)
+
+	// Verify checksum after all payload bytes have been tee'd.
+	if verifyChecksum {
+		// Streaming double-SHA256: sha256(sha256(payload)).
+		// h accumulates sha256 of payload; outer applies sha256 to that digest.
+		inner := h.Sum(nil)
+		outer := sha256.Sum256(inner)
+		checksum := outer[:4]
+
+		if !bytes.Equal(checksum, hdr.checksum[:]) {
+			str := fmt.Sprintf("payload checksum failed - header "+
+				"indicates %v, but actual checksum is %v.",
+				hdr.checksum, checksum)
+
+			return totalBytes, nil, messageError("ReadMessage", str)
+		}
+	}
+
+	return totalBytes, msg, nil
 }
 
 // ReadMessageN reads, validates, and parses the next bitcoin Message from r for
