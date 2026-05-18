@@ -114,13 +114,13 @@ func TestMsgBlockArenaRoundTrip(t *testing.T) {
 	defer SetLimits(fixedExcessiveBlockSize)
 
 	scripts := [][]byte{
-		nil,                                          // 0 bytes
-		{0x01},                                       // 1 byte
-		bytes.Repeat([]byte{0xAB}, 512),              // exactly freeListMaxScriptSize
-		bytes.Repeat([]byte{0xCD}, 2*1024*1024),      // 2 MiB
+		nil,                                     // 0 bytes
+		{0x01},                                  // 1 byte
+		bytes.Repeat([]byte{0xAB}, 512),         // exactly freeListMaxScriptSize
+		bytes.Repeat([]byte{0xCD}, 2*1024*1024), // 2 MiB
 	}
 
-	var txs []*MsgTx
+	txs := make([]*MsgTx, 0, len(scripts))
 	for i, sc := range scripts {
 		tx := &MsgTx{
 			Version: 1,

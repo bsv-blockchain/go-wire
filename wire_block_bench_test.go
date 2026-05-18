@@ -151,7 +151,7 @@ func BenchmarkDecodeBlock_FewLarge(b *testing.B) {
 
 	// Raise the excessive block size so large scripts pass validation.
 	// 10 txs * 2 * 5 MiB = 100 MiB of scripts; set ebs well above that.
-	SetLimits(4 * 1024 * 1024 * 1024) // 4 GiB
+	SetLimits(4 * 1024 * 1024 * 1024)        // 4 GiB
 	defer SetLimits(fixedExcessiveBlockSize) // restore test default
 
 	data := buildSyntheticBlock(txCount, scriptLen, scriptLen)
@@ -181,7 +181,6 @@ func BenchmarkArenaAllocPattern(b *testing.B) {
 	}
 
 	for _, count := range []int{1000, 10000, 100000} {
-		count := count
 		b.Run("arena/"+benchItoa(count), func(b *testing.B) {
 			b.ReportAllocs()
 			b.ResetTimer()
@@ -286,13 +285,13 @@ func buildSkewedBlock(hugeScriptLen, smallScriptLen, smallTxCount int) []byte {
 // fat-block stress block where a handful of huge transactions outweigh the
 // thousands of standard-size ones.
 //
-// Pre-arena behaviour on this shape: scratch.cap pinned at hugeScriptLen for
+// Pre-arena behavior on this shape: scratch.cap pinned at hugeScriptLen for
 // the entire block; every small tx still allocates a per-tx scripts buffer.
 // Post-arena: scratch is gone entirely. Arena chunks hold only the script data,
 // no separate "high water mark" buffer.
 func BenchmarkDecodeBlock_Skewed(b *testing.B) {
-	const hugeScriptLen = 4 * 1024 * 1024  // 4 MiB per input/output script
-	const smallScriptLen = 2 * 1024        // 2 KiB
+	const hugeScriptLen = 4 * 1024 * 1024 // 4 MiB per input/output script
+	const smallScriptLen = 2 * 1024       // 2 KiB
 	const smallTxCount = 500
 
 	// Raise ebs so the huge scripts pass validation.

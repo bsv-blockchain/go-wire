@@ -30,7 +30,7 @@ type blockArena struct {
 	offset int      // write cursor within chunks[0]
 }
 
-// newBlockArena returns an initialised blockArena with one pre-allocated chunk.
+// newBlockArena returns an initialized blockArena with one pre-allocated chunk.
 func newBlockArena() *blockArena {
 	return &blockArena{
 		chunks: [][]byte{make([]byte, blockArenaChunkSize)},
