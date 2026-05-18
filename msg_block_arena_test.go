@@ -28,8 +28,8 @@ func syntheticMsgBlock(txs []*MsgTx) *MsgBlock {
 	}
 }
 
-// encodeBlock serializes a MsgBlock to bytes using Serialize.
-func encodeBlock(t *testing.T, blk *MsgBlock) []byte {
+// serializeBlock serializes a MsgBlock to bytes using Serialize.
+func serializeBlock(t *testing.T, blk *MsgBlock) []byte {
 	t.Helper()
 	var buf bytes.Buffer
 	if err := blk.Serialize(&buf); err != nil {
@@ -77,7 +77,7 @@ func TestMsgBlockArenaNoAliasing(t *testing.T) {
 		LockTime: 0,
 	}
 
-	data := encodeBlock(t, syntheticMsgBlock([]*MsgTx{tx0, tx1}))
+	data := serializeBlock(t, syntheticMsgBlock([]*MsgTx{tx0, tx1}))
 	blk := decodeBlock(t, data)
 
 	if len(blk.Transactions) != 2 {
@@ -135,7 +135,7 @@ func TestMsgBlockArenaRoundTrip(t *testing.T) {
 		txs = append(txs, tx)
 	}
 
-	original := encodeBlock(t, syntheticMsgBlock(txs))
+	original := serializeBlock(t, syntheticMsgBlock(txs))
 	blk := decodeBlock(t, original)
 
 	// Re-encode the decoded block.
@@ -165,7 +165,7 @@ func TestMsgBlockArenaTruncated(t *testing.T) {
 		LockTime: 0,
 	}
 
-	full := encodeBlock(t, syntheticMsgBlock([]*MsgTx{tx}))
+	full := serializeBlock(t, syntheticMsgBlock([]*MsgTx{tx}))
 	half := full[:len(full)/2]
 
 	var blk MsgBlock
@@ -197,7 +197,7 @@ func TestMsgBlockArenaEmptyTxScripts(t *testing.T) {
 		LockTime: 0,
 	}
 
-	data := encodeBlock(t, syntheticMsgBlock([]*MsgTx{tx}))
+	data := serializeBlock(t, syntheticMsgBlock([]*MsgTx{tx}))
 	blk := decodeBlock(t, data)
 
 	if len(blk.Transactions) != 1 {
