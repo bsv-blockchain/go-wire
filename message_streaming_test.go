@@ -19,13 +19,14 @@ import (
 )
 
 // encodeBlock encodes a MsgBlock into a full wire message (header + payload) and
-// returns the resulting bytes.
-func encodeBlock(t *testing.T, msg *MsgBlock, pver uint32, bsvnet BitcoinNet) []byte {
+// returns the resulting bytes. Uses ProtocolVersion + MainNet since all call
+// sites pass those.
+func encodeBlock(t *testing.T, msg *MsgBlock) []byte {
 	t.Helper()
 
 	var buf bytes.Buffer
 
-	_, err := WriteMessageN(&buf, msg, pver, bsvnet)
+	_, err := WriteMessageN(&buf, msg, ProtocolVersion, MainNet)
 	if err != nil {
 		t.Fatalf("WriteMessageN: %v", err)
 	}
@@ -39,7 +40,7 @@ func TestReadMessageStreamingN_HappyPath(t *testing.T) {
 	pver := ProtocolVersion
 	bsvnet := MainNet
 
-	encoded := encodeBlock(t, &blockOne, pver, bsvnet)
+	encoded := encodeBlock(t, &blockOne)
 
 	r := bytes.NewReader(encoded)
 
@@ -84,16 +85,16 @@ func TestReadMessageStreamingN_ChecksumMismatch(t *testing.T) {
 	bsvnet := MainNet
 
 	// Build two valid messages.
-	encoded1 := encodeBlock(t, &blockOne, pver, bsvnet)
-	encoded2 := encodeBlock(t, &blockOne, pver, bsvnet)
+	encoded1 := encodeBlock(t, &blockOne)
+	encoded2 := encodeBlock(t, &blockOne)
 
 	// Corrupt one payload byte (first byte after the 24-byte header).
-	corrupt := make([]byte, len(encoded1))
-	copy(corrupt, encoded1)
+	corrupt := make([]byte, 0, len(encoded1)+len(encoded2))
+	corrupt = append(corrupt, encoded1...)
 	corrupt[MessageHeaderSize] ^= 0xff
+	corrupt = append(corrupt, encoded2...)
 
-	combined := append(corrupt, encoded2...)
-	r := bytes.NewReader(combined)
+	r := bytes.NewReader(corrupt)
 
 	// First read must fail with a checksum MessageError.
 	_, _, err := ReadMessageStreamingN(r, pver, bsvnet, BaseEncoding)
@@ -129,7 +130,7 @@ func TestReadMessageStreamingN_TruncatedPayload(t *testing.T) {
 	pver := ProtocolVersion
 	bsvnet := MainNet
 
-	encoded := encodeBlock(t, &blockOne, pver, bsvnet)
+	encoded := encodeBlock(t, &blockOne)
 
 	// Truncate to header + half the payload.
 	truncated := encoded[:MessageHeaderSize+len(encoded[MessageHeaderSize:])/2]
@@ -160,16 +161,17 @@ func TestReadMessageStreamingN_NextMessageAlignedOnError(t *testing.T) {
 	pver := ProtocolVersion
 	bsvnet := MainNet
 
-	encoded1 := encodeBlock(t, &blockOne, pver, bsvnet)
-	encoded2 := encodeBlock(t, &blockOne, pver, bsvnet)
+	encoded1 := encodeBlock(t, &blockOne)
+	encoded2 := encodeBlock(t, &blockOne)
 
-	corrupt := make([]byte, len(encoded1))
-	copy(corrupt, encoded1)
+	corrupt := make([]byte, 0, len(encoded1)+len(encoded2))
+	corrupt = append(corrupt, encoded1...)
 	// Flip a byte deep in the payload to avoid hitting the block header
 	// directly (which could trip a struct-level error before checksum).
 	corrupt[MessageHeaderSize+50] ^= 0x01
+	corrupt = append(corrupt, encoded2...)
 
-	r := bytes.NewReader(append(corrupt, encoded2...))
+	r := bytes.NewReader(corrupt)
 
 	// Read 1 must fail.
 	if _, _, err := ReadMessageStreamingN(r, pver, bsvnet, BaseEncoding); err == nil {
@@ -194,7 +196,7 @@ func TestReadMessageStreamingN_ExternalHandlerWins(t *testing.T) {
 	pver := ProtocolVersion
 	bsvnet := MainNet
 
-	encoded := encodeBlock(t, &blockOne, pver, bsvnet)
+	encoded := encodeBlock(t, &blockOne)
 
 	handlerCalled := false
 
@@ -259,7 +261,7 @@ func TestReadMessageStreamingN_ExtMsgChecksumSkipped(t *testing.T) {
 	//
 	// The test asserts that ReadMessageStreamingN succeeds — if checksum
 	// verification ran for this message, it would fail (wrong checksum).
-	encoded := encodeBlock(t, &blockOne, pver, bsvnet)
+	encoded := encodeBlock(t, &blockOne)
 
 	// Corrupt the checksum bytes in the header (bytes [20:24]).
 	corrupt := make([]byte, len(encoded))
@@ -346,7 +348,7 @@ func TestReadMessageStreamingN_BadHeaderDiscards(t *testing.T) {
 	buf.Write(fakePayload)
 
 	// Append a valid second message after the bad one.
-	encoded2 := encodeBlock(t, &blockOne, pver, bsvnet)
+	encoded2 := encodeBlock(t, &blockOne)
 	buf.Write(encoded2)
 
 	r := bytes.NewReader(buf.Bytes())
@@ -380,7 +382,7 @@ func TestReadMessageStreamingN_BadHeaderDiscards(t *testing.T) {
 // up as a confusing error, ReadMessageStreamingN returns a clear *MessageError
 // for CmdVersion.
 //
-// This test pins that behaviour so future maintainers see it as intentional.
+// This test pins that behavior so future maintainers see it as intentional.
 func TestReadMessageStreamingN_VersionMsgForbidden(t *testing.T) {
 	pver := ProtocolVersion
 	bsvnet := MainNet

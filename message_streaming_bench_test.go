@@ -14,7 +14,7 @@ import (
 
 // synthBlock builds a MsgBlock with approximately targetBytes of payload
 // by adding simple transactions with a script of the given size until the
-// serialised size reaches targetBytes. It is used to generate realistic
+// serialized size reaches targetBytes. It is used to generate realistic
 // large-block bench inputs without reading from disk.
 func synthBlock(targetBytes int) *MsgBlock {
 	prevHash := chainhash.Hash{}
@@ -52,7 +52,7 @@ func synthBlock(targetBytes int) *MsgBlock {
 		LockTime: 0,
 	}
 
-	// Serialised size per transaction (header overhead accounted for lazily).
+	// Serialized size per transaction (header overhead accounted for lazily).
 	txSize := txTemplate.SerializeSize()
 
 	for block.SerializeSize() < targetBytes {

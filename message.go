@@ -534,7 +534,7 @@ func ReadMessageWithEncodingN(r io.Reader, pver uint32, bsvnet BitcoinNet, enc M
 // ReadMessageWithEncodingN; callers that need the raw bytes should continue to
 // use ReadMessageWithEncodingN.
 //
-// Behaviour differences from ReadMessageWithEncodingN:
+// Behavior differences from ReadMessageWithEncodingN:
 //
 //  1. Payload is NOT buffered. Instead, r is wrapped in an io.LimitedReader
 //     bounded to the declared payload length, and passed directly to
