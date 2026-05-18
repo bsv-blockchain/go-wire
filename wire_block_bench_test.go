@@ -13,7 +13,7 @@ import (
 // buildSyntheticBlock constructs a serialized MsgBlock with the given number
 // of transactions, each carrying one input with a signatureScript of
 // inputScriptLen bytes and one output with a pkScript of outputScriptLen bytes.
-func buildSyntheticBlock(txCount int, inputScriptLen, outputScriptLen int) []byte {
+func buildSyntheticBlock(txCount, inputScriptLen, outputScriptLen int) []byte {
 	var buf bytes.Buffer
 
 	// Block header: 80 bytes (version + prevblock + merkleroot + time + bits + nonce)
