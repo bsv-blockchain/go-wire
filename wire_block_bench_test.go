@@ -170,6 +170,55 @@ func BenchmarkDecodeBlock_FewLarge(b *testing.B) {
 	}
 }
 
+// BenchmarkDecodeBlock_TinyCoinbase models legacy-peer catchup at low heights
+// where blocks contain only the coinbase (~150-byte signatureScript, ~25-byte
+// pkScript). This is the pathological case for an eagerly-allocated 4 MiB
+// arena: the entire chunk is wasted per block.
+func BenchmarkDecodeBlock_TinyCoinbase(b *testing.B) {
+	const txCount = 1
+	const inputScriptLen = 150
+	const outputScriptLen = 25
+
+	data := buildSyntheticBlock(txCount, inputScriptLen, outputScriptLen)
+	b.SetBytes(int64(len(data)))
+	r := bytes.NewReader(data)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_, _ = r.Seek(0, 0)
+		var msg MsgBlock
+		if err := msg.Bsvdecode(r, 0, BaseEncoding); err != nil {
+			b.Fatalf("Bsvdecode: %v", err)
+		}
+	}
+}
+
+// BenchmarkDecodeBlock_TwoTxLegacy models legacy-peer catchup at mid-low
+// heights — coinbase + one tiny tx, around the 500-byte block-size mean we
+// observed at h≈67k on mainnet.
+func BenchmarkDecodeBlock_TwoTxLegacy(b *testing.B) {
+	const txCount = 2
+	const inputScriptLen = 107
+	const outputScriptLen = 25
+
+	data := buildSyntheticBlock(txCount, inputScriptLen, outputScriptLen)
+	b.SetBytes(int64(len(data)))
+	r := bytes.NewReader(data)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_, _ = r.Seek(0, 0)
+		var msg MsgBlock
+		if err := msg.Bsvdecode(r, 0, BaseEncoding); err != nil {
+			b.Fatalf("Bsvdecode: %v", err)
+		}
+	}
+}
+
 // BenchmarkArenaAllocPattern microbenchmarks the blockArena vs plain make for
 // mixed-size allocations. The arena sub-benchmarks are added after the arena
 // is implemented; both arena and make variants are defined here so the file
