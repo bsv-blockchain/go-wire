@@ -19,6 +19,14 @@ import (
 // backing array multiple times.
 const defaultTransactionAlloc = 2048
 
+// arenaScriptHintPerTx is a per-tx estimate (in bytes) of combined input +
+// output script data used to size the first arena chunk on block decode. It
+// is intentionally generous: undershooting just costs one extra standard chunk
+// later; overshooting costs unused first-chunk bytes that are GC'd with the
+// arena. 256 covers a P2PKH input (~107 B unlocking) + a P2PKH output (~25 B
+// locking) with comfortable headroom for the slightly larger common cases.
+const arenaScriptHintPerTx = 256
+
 // MaxBlocksPerMsg is the maximum number of blocks allowed per message.
 const MaxBlocksPerMsg = 500
 
@@ -90,7 +98,12 @@ func (msg *MsgBlock) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) er
 	txs := make([]MsgTx, txCount)
 	msg.Transactions = make([]*MsgTx, txCount)
 
-	arena := newBlockArena()
+	// Size the first arena chunk to fit the expected script bytes for this
+	// block. arenaScriptHintPerTx is a rough average of input+output script
+	// bytes per tx in mainnet history; the hint is clamped inside Alloc to
+	// [4 KiB, 4 MiB] so tiny blocks pay ~4 KiB and big blocks still amortize
+	// the full standard chunk size.
+	arena := newBlockArenaSized(int(txCount) * arenaScriptHintPerTx)
 
 	for i := uint64(0); i < txCount; i++ {
 		msg.Transactions[i] = &txs[i]
