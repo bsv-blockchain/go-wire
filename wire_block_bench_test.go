@@ -98,13 +98,11 @@ func writeVarIntBuf(buf *bytes.Buffer, v uint64) {
 	}
 }
 
-// BenchmarkDecodeBlock_100MB benchmarks decoding a ~100 MB block with
-// ~1000 transactions, each with ~50 KiB scripts.
-func BenchmarkDecodeBlock_100MB(b *testing.B) {
-	const txCount = 1000
-	const scriptLen = 50 * 1024 // 50 KiB per script
-
-	data := buildSyntheticBlock(txCount, scriptLen, scriptLen)
+// benchDecodeBlock runs the standard MsgBlock decode loop against a fixed
+// serialized block. Every BenchmarkDecodeBlock_* function delegates here so
+// per-benchmark functions stay focused on the block shape under test.
+func benchDecodeBlock(b *testing.B, data []byte) {
+	b.Helper()
 	b.SetBytes(int64(len(data)))
 	r := bytes.NewReader(data)
 
@@ -120,26 +118,22 @@ func BenchmarkDecodeBlock_100MB(b *testing.B) {
 	}
 }
 
+// BenchmarkDecodeBlock_100MB benchmarks decoding a ~100 MB block with
+// ~1000 transactions, each with ~50 KiB scripts.
+func BenchmarkDecodeBlock_100MB(b *testing.B) {
+	const txCount = 1000
+	const scriptLen = 50 * 1024 // 50 KiB per script
+
+	benchDecodeBlock(b, buildSyntheticBlock(txCount, scriptLen, scriptLen))
+}
+
 // BenchmarkDecodeBlock_ManySmall benchmarks decoding a block with many small
 // transactions whose scripts are below freeListMaxScriptSize (512 bytes).
 func BenchmarkDecodeBlock_ManySmall(b *testing.B) {
 	const txCount = 50000
 	const scriptLen = 200 // below freeListMaxScriptSize=512
 
-	data := buildSyntheticBlock(txCount, scriptLen, scriptLen)
-	b.SetBytes(int64(len(data)))
-	r := bytes.NewReader(data)
-
-	b.ReportAllocs()
-	b.ResetTimer()
-
-	for i := 0; i < b.N; i++ {
-		_, _ = r.Seek(0, 0)
-		var msg MsgBlock
-		if err := msg.Bsvdecode(r, 0, BaseEncoding); err != nil {
-			b.Fatalf("Bsvdecode: %v", err)
-		}
-	}
+	benchDecodeBlock(b, buildSyntheticBlock(txCount, scriptLen, scriptLen))
 }
 
 // BenchmarkDecodeBlock_FewLarge benchmarks decoding a block with a handful of
@@ -154,20 +148,7 @@ func BenchmarkDecodeBlock_FewLarge(b *testing.B) {
 	SetLimits(4 * 1024 * 1024 * 1024)        // 4 GiB
 	defer SetLimits(fixedExcessiveBlockSize) // restore test default
 
-	data := buildSyntheticBlock(txCount, scriptLen, scriptLen)
-	b.SetBytes(int64(len(data)))
-	r := bytes.NewReader(data)
-
-	b.ReportAllocs()
-	b.ResetTimer()
-
-	for i := 0; i < b.N; i++ {
-		_, _ = r.Seek(0, 0)
-		var msg MsgBlock
-		if err := msg.Bsvdecode(r, 0, BaseEncoding); err != nil {
-			b.Fatalf("Bsvdecode: %v", err)
-		}
-	}
+	benchDecodeBlock(b, buildSyntheticBlock(txCount, scriptLen, scriptLen))
 }
 
 // BenchmarkDecodeBlock_TinyCoinbase models legacy-peer catchup at low heights
@@ -179,20 +160,7 @@ func BenchmarkDecodeBlock_TinyCoinbase(b *testing.B) {
 	const inputScriptLen = 150
 	const outputScriptLen = 25
 
-	data := buildSyntheticBlock(txCount, inputScriptLen, outputScriptLen)
-	b.SetBytes(int64(len(data)))
-	r := bytes.NewReader(data)
-
-	b.ReportAllocs()
-	b.ResetTimer()
-
-	for i := 0; i < b.N; i++ {
-		_, _ = r.Seek(0, 0)
-		var msg MsgBlock
-		if err := msg.Bsvdecode(r, 0, BaseEncoding); err != nil {
-			b.Fatalf("Bsvdecode: %v", err)
-		}
-	}
+	benchDecodeBlock(b, buildSyntheticBlock(txCount, inputScriptLen, outputScriptLen))
 }
 
 // BenchmarkDecodeBlock_TwoTxLegacy models legacy-peer catchup at mid-low
@@ -203,20 +171,7 @@ func BenchmarkDecodeBlock_TwoTxLegacy(b *testing.B) {
 	const inputScriptLen = 107
 	const outputScriptLen = 25
 
-	data := buildSyntheticBlock(txCount, inputScriptLen, outputScriptLen)
-	b.SetBytes(int64(len(data)))
-	r := bytes.NewReader(data)
-
-	b.ReportAllocs()
-	b.ResetTimer()
-
-	for i := 0; i < b.N; i++ {
-		_, _ = r.Seek(0, 0)
-		var msg MsgBlock
-		if err := msg.Bsvdecode(r, 0, BaseEncoding); err != nil {
-			b.Fatalf("Bsvdecode: %v", err)
-		}
-	}
+	benchDecodeBlock(b, buildSyntheticBlock(txCount, inputScriptLen, outputScriptLen))
 }
 
 // BenchmarkArenaAllocPattern microbenchmarks the blockArena vs plain make for
@@ -347,18 +302,5 @@ func BenchmarkDecodeBlock_Skewed(b *testing.B) {
 	SetLimits(4 * 1024 * 1024 * 1024)
 	defer SetLimits(fixedExcessiveBlockSize)
 
-	data := buildSkewedBlock(hugeScriptLen, smallScriptLen, smallTxCount)
-	b.SetBytes(int64(len(data)))
-	r := bytes.NewReader(data)
-
-	b.ReportAllocs()
-	b.ResetTimer()
-
-	for i := 0; i < b.N; i++ {
-		_, _ = r.Seek(0, 0)
-		var msg MsgBlock
-		if err := msg.Bsvdecode(r, 0, BaseEncoding); err != nil {
-			b.Fatalf("Bsvdecode: %v", err)
-		}
-	}
+	benchDecodeBlock(b, buildSkewedBlock(hugeScriptLen, smallScriptLen, smallTxCount))
 }
