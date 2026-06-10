@@ -554,7 +554,8 @@ func ReadVarInt(r io.Reader, _ uint32) (uint64, error) {
 		minVal := uint64(0x100000000)
 		if rv < minVal {
 			return 0, messageError("ReadVarInt", fmt.Sprintf(
-				errNonCanonicalVarInt, rv, discriminant, minVal))
+				errNonCanonicalVarInt, rv, discriminant, minVal,
+			))
 		}
 
 	case 0xfe:
@@ -572,7 +573,8 @@ func ReadVarInt(r io.Reader, _ uint32) (uint64, error) {
 		minVal := uint64(0x10000)
 		if rv < minVal {
 			return 0, messageError("ReadVarInt", fmt.Sprintf(
-				errNonCanonicalVarInt, rv, discriminant, minVal))
+				errNonCanonicalVarInt, rv, discriminant, minVal,
+			))
 		}
 
 	case 0xfd:
@@ -590,7 +592,8 @@ func ReadVarInt(r io.Reader, _ uint32) (uint64, error) {
 		minVal := uint64(0xfd)
 		if rv < minVal {
 			return 0, messageError("ReadVarInt", fmt.Sprintf(
-				errNonCanonicalVarInt, rv, discriminant, minVal))
+				errNonCanonicalVarInt, rv, discriminant, minVal,
+			))
 		}
 
 	default:
