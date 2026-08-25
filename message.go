@@ -193,6 +193,9 @@ func makeEmptyMessage(command string) (Message, error) {
 	case CmdGetCFilters:
 		msg = &MsgGetCFilters{}
 
+	case CmdGetCFHeaders:
+		msg = &MsgGetCFHeaders{}
+
 	case CmdGetCFCheckpt:
 		msg = &MsgGetCFCheckpt{}
 
