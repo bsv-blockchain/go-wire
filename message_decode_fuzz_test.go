@@ -17,7 +17,7 @@ var allDecodeCommands = []string{
 	CmdFilterLoad, CmdMerkleBlock, CmdReject, CmdSendHeaders, CmdFeeFilter,
 	CmdGetCFilters, CmdGetCFHeaders, CmdGetCFCheckpt, CmdCFilter, CmdCFHeaders,
 	CmdCFCheckpt, CmdProtoconf, CmdExtMsg, CmdSendcmpct, CmdAuthch, CmdAuthresp,
-	CmdCreateStream, CmdStreamAck,
+	CmdCreateStream, CmdStreamAck, CmdCmpctBlock, CmdGetBlockTxn, CmdBlockTxn,
 }
 
 // hugeCount is a varint encoding 0xFFFFFFFFFFFFFFFF — a hostile "count" with no
