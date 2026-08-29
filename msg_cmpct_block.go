@@ -93,7 +93,9 @@ func (msg *MsgCmpctBlock) Bsvdecode(r io.Reader, pver uint32, enc MessageEncodin
 		return messageError(op, str)
 	}
 
-	msg.ShortIDs = make([]uint64, 0, shortIDCount)
+	// The count is attacker controlled, so let append grow the slice
+	// instead of preallocating a capacity the payload may not fill.
+	msg.ShortIDs = make([]uint64, 0)
 
 	for i := uint64(0); i < shortIDCount; i++ {
 		var lsb uint32
@@ -125,7 +127,9 @@ func (msg *MsgCmpctBlock) Bsvdecode(r io.Reader, pver uint32, enc MessageEncodin
 		return messageError(op, str)
 	}
 
-	msg.PrefilledTxn = make([]PrefilledTransaction, 0, prefilledCount)
+	// The count is attacker controlled, so let append grow the slice
+	// instead of preallocating a capacity the payload may not fill.
+	msg.PrefilledTxn = make([]PrefilledTransaction, 0)
 
 	var previous uint32
 

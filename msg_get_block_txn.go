@@ -45,7 +45,9 @@ func (msg *MsgGetBlockTxn) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding
 		return messageError(op, str)
 	}
 
-	msg.Indexes = make([]uint32, 0, count)
+	// The count is attacker controlled, so let append grow the slice
+	// instead of preallocating a capacity the payload may not fill.
+	msg.Indexes = make([]uint32, 0)
 
 	var previous uint32
 
