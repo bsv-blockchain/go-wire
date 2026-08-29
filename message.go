@@ -89,6 +89,9 @@ const (
 	CmdAuthresp     = "authresp"
 	CmdCreateStream = "createstrm"
 	CmdStreamAck    = "streamack"
+	CmdCmpctBlock   = "cmpctblock"
+	CmdGetBlockTxn  = "getblocktxn"
+	CmdBlockTxn     = "blocktxn"
 )
 
 // MessageEncoding represents the wire message encoding format to be used.
@@ -228,6 +231,15 @@ func makeEmptyMessage(command string) (Message, error) {
 
 	case CmdStreamAck:
 		msg = &MsgStreamAck{}
+
+	case CmdCmpctBlock:
+		msg = &MsgCmpctBlock{}
+
+	case CmdGetBlockTxn:
+		msg = &MsgGetBlockTxn{}
+
+	case CmdBlockTxn:
+		msg = &MsgBlockTxn{}
 
 	default:
 		return nil, fmt.Errorf("unhandled command [%s]: %#v", command, msg) //nolint:err113 // needs refactoring
