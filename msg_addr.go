@@ -73,19 +73,21 @@ func (msg *MsgAddr) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding) error
 		return messageError("MsgAddr.Bsvdecode", str)
 	}
 
-	addrList := make([]NetAddress, count)
-	msg.AddrList = make([]*NetAddress, 0, count)
+	// Grow the slice as addresses are read rather than sizing it from the
+	// declared count, so a short frame with a large count cannot force an eager
+	// allocation before the first address is read (CWE-789). boundedReserve keeps
+	// a fully-backed message a single allocation with no growth.
+	addrList := make([]NetAddress, 0, boundedReserve(r, count, minNetAddressPayload))
 
 	for i := uint64(0); i < count; i++ {
-		na := &addrList[i]
+		addrList = growByOne(addrList)
 
-		err := readNetAddress(r, pver, na, true)
-		if err != nil {
+		if err = readNetAddress(r, pver, &addrList[i], true); err != nil {
 			return err
 		}
-
-		_ = msg.AddAddress(na)
 	}
+
+	msg.AddrList = pointersTo(addrList)
 
 	return nil
 }

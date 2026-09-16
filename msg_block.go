@@ -91,28 +91,32 @@ func (msg *MsgBlock) Bsvdecode(r io.Reader, pver uint32, enc MessageEncoding) er
 		return messageError("MsgBlock.Bsvdecode", str)
 	}
 
-	// Pre-allocate all MsgTx structs contiguously and use a block-scoped
-	// arena allocator for script bytes. The arena eliminates the per-tx
-	// contiguous copy that the old scratch-buffer approach required, and
-	// returns stable slices (cap==len) directly into fixed chunks.
-	txs := make([]MsgTx, txCount)
-	msg.Transactions = make([]*MsgTx, txCount)
+	// Decode transactions into a contiguous backing array that grows only as
+	// each transaction is read. The declared txCount is NOT used to size the
+	// allocation up front: on the streaming read path it is the peer's declared
+	// length divided by the minimum tx size and is not backed by bytes known to
+	// be present, so eagerly allocating from it would let a short frame force a
+	// huge allocation (CWE-789). boundedReserve keeps the common, fully-backed
+	// case a single allocation with no growth; the block-scoped arena allocator
+	// still returns stable script slices (cap==len) directly into fixed chunks.
+	txs := make([]MsgTx, 0, boundedReserve(r, txCount, minTxPayload))
 
 	// Size the first arena chunk to fit the expected script bytes for this
 	// block. arenaScriptHintPerTx is a rough average of input+output script
 	// bytes per tx in mainnet history; the hint is clamped inside Alloc to
 	// [4 KiB, 4 MiB] so tiny blocks pay ~4 KiB and big blocks still amortize
 	// the full standard chunk size.
-	arena := newBlockArenaSized(int(txCount) * arenaScriptHintPerTx)
+	arena := newBlockArenaSized(cap(txs) * arenaScriptHintPerTx)
 
 	for i := uint64(0); i < txCount; i++ {
-		msg.Transactions[i] = &txs[i]
+		txs = growByOne(txs)
 
-		err := txs[i].bsvdecode(r, pver, enc, arena)
-		if err != nil {
+		if err = txs[i].bsvdecode(r, pver, enc, arena); err != nil {
 			return err
 		}
 	}
+
+	msg.Transactions = pointersTo(txs)
 
 	return nil
 }
@@ -162,22 +166,25 @@ func (msg *MsgBlock) DeserializeTxLoc(r *bytes.Buffer) ([]TxLoc, error) {
 		return nil, messageError("MsgBlock.DeserializeTxLoc", str)
 	}
 
-	// Deserialize each transaction while keeping track of its location
-	// within the byte stream.
-	msg.Transactions = make([]*MsgTx, 0, txCount)
+	// Deserialize each transaction while keeping track of its location within the
+	// byte stream. Both slices grow as transactions are read rather than being
+	// sized directly from the declared txCount, so a truncated buffer with a huge
+	// declared count cannot force a large eager allocation (CWE-789).
+	// boundedReserve keeps a fully-backed buffer a single allocation.
+	reserve := boundedReserve(r, txCount, minTxPayload)
+	msg.Transactions = make([]*MsgTx, 0, reserve)
+	txLocs := make([]TxLoc, 0, reserve)
 
-	txLocs := make([]TxLoc, txCount)
 	for i := uint64(0); i < txCount; i++ {
-		txLocs[i].TxStart = fullLen - r.Len()
+		start := fullLen - r.Len()
 		tx := MsgTx{}
 
-		err := tx.Deserialize(r)
-		if err != nil {
+		if err = tx.Deserialize(r); err != nil {
 			return nil, err
 		}
 
 		msg.Transactions = append(msg.Transactions, &tx)
-		txLocs[i].TxLen = (fullLen - r.Len()) - txLocs[i].TxStart
+		txLocs = append(txLocs, TxLoc{TxStart: start, TxLen: (fullLen - r.Len()) - start})
 	}
 
 	return txLocs, nil

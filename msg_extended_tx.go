@@ -22,6 +22,11 @@ type ExtendedTxIn struct {
 	Sequence           uint32
 }
 
+// minExtendedTxInPayload is the minimum payload size for an extended transaction
+// input: OutPoint (PreviousOutPoint.Hash 32 + Index 4) + SignatureScript length
+// varint 1 + Sequence 4 + PreviousTxSatoshis 8 + PreviousTxScript length varint 1.
+const minExtendedTxInPayload = 36 + 1 + 4 + 8 + 1
+
 // SerializeSize returns the number of bytes it would take to serialize
 // the transaction input.
 func (t *ExtendedTxIn) SerializeSize() int {
@@ -190,51 +195,48 @@ func (msg *MsgExtendedTx) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding)
 		return messageError("MsgTx.Bsvdecode", str)
 	}
 
-	// returnScriptBuffers is a closure that returns any script buffers that
-	// were borrowed from the pool when there are any deserialization
-	// errors.  This is only valid to call before the final step which
-	// replaces the scripts with the location in a contiguous buffer and
-	// returns them.
-	returnScriptBuffers := func() {
-		for _, txIn := range msg.TxIn {
-			if txIn == nil {
-				continue
-			}
+	// Deserialize the inputs and outputs into slices that grow as elements are
+	// read rather than being sized from the declared counts, so a short frame
+	// with a huge count cannot force an eager allocation before the first element
+	// is read (CWE-789). boundedReserve keeps a fully-backed transaction a single
+	// allocation with no growth.
+	var totalScriptSize uint64
 
-			if txIn.SignatureScript != nil {
-				scriptPool.Return(txIn.SignatureScript)
+	txIns := make([]ExtendedTxIn, 0, boundedReserve(r, count, minExtendedTxInPayload))
+
+	var txOuts []TxOut
+
+	// returnScriptBuffers returns any script buffers borrowed from the pool when
+	// a deserialization error occurs. It walks the value slices directly, since
+	// the []*ExtendedTxIn / []*TxOut views are built only after each list is
+	// decoded. This is only valid to call before the final step which replaces
+	// the scripts with the location in a contiguous buffer and returns them.
+	returnScriptBuffers := func() {
+		for i := range txIns {
+			if txIns[i].SignatureScript != nil {
+				scriptPool.Return(txIns[i].SignatureScript)
 			}
 		}
 
-		for _, txOut := range msg.TxOut {
-			if txOut == nil || txOut.PkScript == nil {
-				continue
+		for i := range txOuts {
+			if txOuts[i].PkScript != nil {
+				scriptPool.Return(txOuts[i].PkScript)
 			}
-
-			scriptPool.Return(txOut.PkScript)
 		}
 	}
 
-	// Deserialize the inputs.
-	var totalScriptSize uint64
-
-	txIns := make([]ExtendedTxIn, count)
-	msg.TxIn = make([]*ExtendedTxIn, count)
-
 	for i := uint64(0); i < count; i++ {
-		// The pointer is set now in case a script buffer is borrowed
-		// and needs to be returned to the pool on error.
-		ti := &txIns[i]
-		msg.TxIn[i] = ti
+		txIns = growByOne(txIns)
 
-		err = readExtendedTxIn(r, pver, msg.Version, ti)
-		if err != nil {
+		if err = readExtendedTxIn(r, pver, msg.Version, &txIns[i]); err != nil {
 			returnScriptBuffers()
 			return err
 		}
 
-		totalScriptSize += uint64(len(ti.SignatureScript))
+		totalScriptSize += uint64(len(txIns[i].SignatureScript))
 	}
+
+	msg.TxIn = pointersTo(txIns)
 
 	count, err = ReadVarInt(r, pver)
 	if err != nil {
@@ -255,23 +257,20 @@ func (msg *MsgExtendedTx) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding)
 	}
 
 	// Deserialize the outputs.
-	txOuts := make([]TxOut, count)
-	msg.TxOut = make([]*TxOut, count)
+	txOuts = make([]TxOut, 0, boundedReserve(r, count, MinTxOutPayload))
 
 	for i := uint64(0); i < count; i++ {
-		// The pointer is set now in case a script buffer is borrowed
-		// and needs to be returned to the pool on error.
-		to := &txOuts[i]
-		msg.TxOut[i] = to
+		txOuts = growByOne(txOuts)
 
-		err = readTxOut(r, pver, msg.Version, to)
-		if err != nil {
+		if err = readTxOut(r, pver, msg.Version, &txOuts[i]); err != nil {
 			returnScriptBuffers()
 			return err
 		}
 
-		totalScriptSize += uint64(len(to.PkScript))
+		totalScriptSize += uint64(len(txOuts[i].PkScript))
 	}
+
+	msg.TxOut = pointersTo(txOuts)
 
 	msg.LockTime, err = binarySerializer.Uint32(r, littleEndian)
 	if err != nil {

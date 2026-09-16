@@ -66,23 +66,11 @@ func (msg *MsgGetHeaders) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding)
 		return messageError("MsgGetHeaders.Bsvdecode", str)
 	}
 
-	// Create a contiguous slice of hashes to deserialize into to
-	// reduce the number of allocations.
-	locatorHashes := make([]chainhash.Hash, count)
-	msg.BlockLocatorHashes = make([]*chainhash.Hash, 0, count)
-
-	for i := uint64(0); i < count; i++ {
-		hash := &locatorHashes[i]
-
-		err = readElement(r, hash)
-		if err != nil {
-			return err
-		}
-
-		err = msg.AddBlockLocatorHash(hash)
-		if err != nil {
-			return err
-		}
+	// Read the locator hashes into a slice that grows as each is read, so a short
+	// frame with a large count cannot force an eager allocation (CWE-789).
+	msg.BlockLocatorHashes, err = decodeHashList(r, count)
+	if err != nil {
+		return err
 	}
 
 	return readElement(r, &msg.HashStop)

@@ -26,6 +26,12 @@ func maxNetAddressPayload(pver uint32) uint64 {
 	return plen
 }
 
+// minNetAddressPayload is the minimum on-wire size of a bitcoin NetAddress:
+// Services 8 + IP 16 + Port 2. The timestamp (4 bytes) is only present for
+// protocol versions >= NetAddressTimeVersion, so it is excluded from this lower
+// bound, which is used only to size (never reject) a decode reservation.
+const minNetAddressPayload = 26
+
 // NetAddress defines information about a peer on the network including the time
 // it was last seen, the services it supports, its IP address, and port.
 type NetAddress struct {
