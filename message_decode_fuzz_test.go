@@ -25,6 +25,12 @@ var allDecodeCommands = []string{
 // first panics ("makeslice: len out of range") or OOMs on this input.
 var hugeCount = []byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
 
+// moderateCount is a varint encoding 50000 — a hostile "count" that stays under
+// every decoder's global maximum (so it is not caught by the "too many ..."
+// bound) yet has no items behind it. It exercises the remaining-bytes guard that
+// rejects a count the payload cannot back (W-1 / CWE-789).
+var moderateCount = []byte{0xfd, 0x50, 0xc3}
+
 // protoconfCrasher is a regression input: a protoconf whose stream-policies
 // length field is huge previously panicked via an unbounded make([]byte, vi) in
 // MsgProtoconf.Bsvdecode. (testdata/ is gitignored here, so the crasher lives as
@@ -39,6 +45,7 @@ func hostileDecodeInputs() [][]byte {
 		nil,
 		make([]byte, 24),
 		hugeCount,
+		moderateCount,
 	}
 }
 
@@ -98,6 +105,7 @@ func assertDecodeNoPanic(t *testing.T, command string, data []byte) {
 func FuzzMessageDecode(f *testing.F) {
 	f.Add(uint8(0), []byte(nil))
 	f.Add(uint8(0), hugeCount)
+	f.Add(uint8(0), moderateCount)
 	for i, c := range allDecodeCommands {
 		if c == CmdProtoconf {
 			f.Add(uint8(i), protoconfCrasher) // known past crasher

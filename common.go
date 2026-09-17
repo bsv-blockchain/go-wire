@@ -5,6 +5,7 @@
 package wire
 
 import (
+	"bytes"
 	"crypto/rand"
 	"encoding/binary"
 	"fmt"
@@ -601,6 +602,138 @@ func ReadVarInt(r io.Reader, _ uint32) (uint64, error) {
 	}
 
 	return rv, nil
+}
+
+// streamPreallocReserve caps the number of elements a decoder reserves up front
+// for a collection whose declared count is NOT backed by bytes known to be
+// present (a streaming or bare io.Reader — see readerRemaining). The slice still
+// grows to the real count as elements are actually read, so this only bounds the
+// eager, up-front allocation: a huge declared count with a short body reserves at
+// most this many elements and then fails on EOF, instead of allocating a
+// count-sized slice before the first element is read (CWE-789). The value is
+// generous enough that typical messages never grow beyond it.
+const streamPreallocReserve = 2048
+
+// readerRemaining reports the number of unread bytes ACTUALLY available from r
+// and whether that count is known. It recognizes only readers whose remaining
+// length reflects bytes already held in memory: *bytes.Buffer (the buffered
+// ReadMessage path, which reads the whole payload before decoding) and
+// *bytes.Reader (direct Deserialize callers).
+//
+// It deliberately does NOT report a remaining length for *io.LimitedReader: on
+// the streaming read path that value is the payload length declared in the peer's
+// header, which is not proof those bytes will arrive. Trusting it would let a
+// truncated stream with a large declared length drive an eager count-sized
+// allocation. For any reader whose real remaining length is unknown, callers fall
+// back to bounded, grow-as-read allocation (see boundedReserve / growByOne).
+//
+// A consequence, by design: streaming decodes perform NO count-vs-remaining
+// rejection at the count field. A count larger than the (untrusted) declared
+// length is not rejected up front; the decode loop simply grows as bytes arrive
+// and fails on EOF, having allocated at most streamPreallocReserve elements. The
+// count-vs-remaining cap applies only to the in-memory readers above.
+func readerRemaining(r io.Reader) (uint64, bool) {
+	switch v := r.(type) {
+	case *bytes.Buffer:
+		return uint64(v.Len()), true
+	case *bytes.Reader:
+		return uint64(v.Len()), true
+	default:
+		return 0, false
+	}
+}
+
+// boundedReserve returns a safe initial capacity for a slice that will hold count
+// elements decoded from r, each occupying at least minElemSize on-wire bytes. It
+// never returns a capacity larger than the bytes actually available can back, so a
+// decoder can size its backing array without trusting an attacker-declared count:
+//
+//   - When r exposes its real remaining length (in-memory readers), the reserve is
+//     capped at remaining/minElemSize — the most elements the remaining bytes could
+//     possibly encode — so an impossible count reserves little and then fails on the
+//     read, while a legitimate count is reserved in full (no growth, no regression).
+//   - Otherwise (streaming / bare reader, where the declared length is not proof of
+//     available bytes) the reserve is capped at streamPreallocReserve; the slice
+//     grows as elements are actually read.
+func boundedReserve(r io.Reader, count, minElemSize uint64) int {
+	limit := uint64(streamPreallocReserve)
+
+	if minElemSize > 0 {
+		if remaining, ok := readerRemaining(r); ok {
+			limit = remaining / minElemSize
+		}
+	}
+
+	if count < limit {
+		return int(count)
+	}
+
+	return int(limit)
+}
+
+// growByOne extends s by exactly one element and returns the result. When s has
+// spare capacity the element is added in place without reallocating; otherwise s
+// is grown (reallocated) via append. Decoders use it together with boundedReserve
+// to read a list one element at a time, so the backing array is never sized
+// directly from an untrusted count and only grows as elements actually arrive.
+// The newly added element is the zero value of T; callers decode into it via the
+// last index. Any []*T pointer view must be built AFTER the loop, since growth may
+// move the backing array.
+func growByOne[T any](s []T) []T {
+	if len(s) < cap(s) {
+		return s[:len(s)+1]
+	}
+
+	var zero T
+
+	return append(s, zero)
+}
+
+// pointersTo returns a slice of pointers to each element of s. It is called after
+// a grow-as-read decode loop completes, when s (and therefore the addresses of its
+// elements) is stable, to build the []*T view the message types expose.
+func pointersTo[T any](s []T) []*T {
+	ptrs := make([]*T, len(s))
+	for i := range s {
+		ptrs[i] = &s[i]
+	}
+
+	return ptrs
+}
+
+// decodeHashList reads count 32-byte hashes from r into a slice that grows as
+// each hash is read (never sized from the untrusted count, see growByOne /
+// boundedReserve), and returns the []*chainhash.Hash view. The caller is
+// responsible for having already rejected counts above its global maximum.
+func decodeHashList(r io.Reader, count uint64) ([]*chainhash.Hash, error) {
+	hashes := make([]chainhash.Hash, 0, boundedReserve(r, count, chainhash.HashSize))
+
+	for i := uint64(0); i < count; i++ {
+		hashes = growByOne(hashes)
+
+		if err := readElement(r, &hashes[i]); err != nil {
+			return nil, err
+		}
+	}
+
+	return pointersTo(hashes), nil
+}
+
+// decodeInvVects reads count inventory vectors from r into a slice that grows as
+// each vector is read, and returns the []*InvVect view. Like decodeHashList it
+// never sizes the backing array from the untrusted count.
+func decodeInvVects(r io.Reader, pver uint32, count uint64) ([]*InvVect, error) {
+	invList := make([]InvVect, 0, boundedReserve(r, count, maxInvVectPayload))
+
+	for i := uint64(0); i < count; i++ {
+		invList = growByOne(invList)
+
+		if err := readInvVect(r, pver, &invList[i]); err != nil {
+			return nil, err
+		}
+	}
+
+	return pointersTo(invList), nil
 }
 
 // WriteVarInt serializes val to w using a variable number of bytes depending

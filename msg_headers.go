@@ -52,14 +52,16 @@ func (msg *MsgHeaders) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding) er
 
 	// Create a contiguous slice of headers to deserialize into to
 	// reduce the number of allocations.
-	headers := make([]BlockHeader, count)
-	msg.Headers = make([]*BlockHeader, 0, count)
+	// Grow the slice as headers are read rather than sizing it from the declared
+	// count, so a short frame with a large count cannot force an eager allocation
+	// before the first header is read (CWE-789). Each header on the wire is 80
+	// bytes plus a transaction-count varint (>= 1 byte).
+	headers := make([]BlockHeader, 0, boundedReserve(r, count, blockHeaderLen+1))
 
 	for i := uint64(0); i < count; i++ {
-		bh := &headers[i]
+		headers = growByOne(headers)
 
-		err = readBlockHeader(r, pver, bh)
-		if err != nil {
+		if err = readBlockHeader(r, pver, &headers[i]); err != nil {
 			return err
 		}
 
@@ -75,12 +77,9 @@ func (msg *MsgHeaders) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding) er
 				"transactions [count %v]", txCount)
 			return messageError("MsgHeaders.Bsvdecode", str)
 		}
-
-		err = msg.AddBlockHeader(bh)
-		if err != nil {
-			return err
-		}
 	}
+
+	msg.Headers = pointersTo(headers)
 
 	return nil
 }

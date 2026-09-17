@@ -74,23 +74,12 @@ func (msg *MsgMerkleBlock) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding
 		return messageError("MsgMerkleBlock.Bsvdecode", str)
 	}
 
-	// Create a contiguous slice of hashes to deserialize into to
-	// reduce the number of allocations.
-	hashes := make([]chainhash.Hash, count)
-	msg.Hashes = make([]*chainhash.Hash, 0, count)
-
-	for i := uint64(0); i < count; i++ {
-		hash := &hashes[i]
-
-		err = readElement(r, hash)
-		if err != nil {
-			return err
-		}
-
-		err = msg.AddTxHash(hash)
-		if err != nil {
-			return err
-		}
+	// Read the hashes into a slice that grows as each is read, so a short frame
+	// with a huge count cannot force an eager allocation before the first hash is
+	// read (CWE-789). The count is already bounded by maxTxPerBlock above.
+	msg.Hashes, err = decodeHashList(r, count)
+	if err != nil {
+		return err
 	}
 
 	msg.Flags, err = ReadVarBytes(r, pver, maxFlagsPerMerkleBlock(),

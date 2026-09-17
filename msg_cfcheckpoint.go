@@ -77,22 +77,11 @@ func (msg *MsgCFCheckpt) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding) 
 		return ErrInsaneCFHeaderCount
 	}
 
-	// Create a contiguous slice of hashes to deserialize into to
-	// reduce the number of allocations.
-	msg.FilterHeaders = make([]*chainhash.Hash, count)
+	// Read the filter headers into a slice that grows as each is read, so a short
+	// frame with a large count cannot force an eager allocation (CWE-789).
+	msg.FilterHeaders, err = decodeHashList(r, count)
 
-	for i := uint64(0); i < count; i++ {
-		var cfh chainhash.Hash
-
-		err := readElement(r, &cfh)
-		if err != nil {
-			return err
-		}
-
-		msg.FilterHeaders[i] = &cfh
-	}
-
-	return nil
+	return err
 }
 
 // BsvEncode encodes the receiver to w using the bitcoin protocol encoding.

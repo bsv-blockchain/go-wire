@@ -379,57 +379,56 @@ func (msg *MsgTx) bsvdecode(r io.Reader, pver uint32, _ MessageEncoding, arena *
 		return messageError("MsgTx.Bsvdecode", str)
 	}
 
-	// returnScriptBuffers is a closure that returns any script buffers that
-	// were borrowed from the pool when there are any deserialization
-	// errors.  This is only valid to call before the final step which
-	// replaces the scripts with the location in a contiguous buffer and
-	// returns them.
-	returnScriptBuffers := func() {
-		for _, txIn := range msg.TxIn {
-			if txIn == nil {
-				continue
-			}
-
-			if txIn.SignatureScript != nil {
-				scriptPool.Return(txIn.SignatureScript)
-			}
-		}
-
-		for _, txOut := range msg.TxOut {
-			if txOut == nil || txOut.PkScript == nil {
-				continue
-			}
-
-			scriptPool.Return(txOut.PkScript)
-		}
-	}
-
 	// When arena is provided (block-level decoding), each script is read
 	// directly into an arena slice. No intermediate scratch buffer, no
 	// per-tx copy. When arena is nil (single-tx decoding), the traditional
-	// scriptPool path is used unchanged.
+	// scriptPool path below is used.
 	if arena != nil {
 		return msg.bsvdecodeWithArena(r, pver, count, arena)
 	}
 
-	// Deserialize the inputs using script pool (single-tx path).
+	// Deserialize the inputs using the script pool (single-tx path). The input
+	// and output slices grow as elements are read rather than being sized from
+	// the declared counts, so a short frame with a huge count cannot force an
+	// eager allocation before the first element is read (CWE-789). boundedReserve
+	// keeps a fully-backed transaction a single allocation with no growth.
 	var totalScriptSize uint64
 
-	txIns := make([]TxIn, count)
-	msg.TxIn = make([]*TxIn, count)
+	txIns := make([]TxIn, 0, boundedReserve(r, count, minTxInPayload))
+
+	var txOuts []TxOut
+
+	// returnScriptBuffers returns any script buffers borrowed from the pool when
+	// a deserialization error occurs. It walks the value slices directly, since
+	// the []*TxIn / []*TxOut views are built only after each list is decoded.
+	// This is only valid to call before the final step which replaces the scripts
+	// with the location in a contiguous buffer and returns them.
+	returnScriptBuffers := func() {
+		for i := range txIns {
+			if txIns[i].SignatureScript != nil {
+				scriptPool.Return(txIns[i].SignatureScript)
+			}
+		}
+
+		for i := range txOuts {
+			if txOuts[i].PkScript != nil {
+				scriptPool.Return(txOuts[i].PkScript)
+			}
+		}
+	}
 
 	for i := uint64(0); i < count; i++ {
-		ti := &txIns[i]
-		msg.TxIn[i] = ti
+		txIns = growByOne(txIns)
 
-		err = readTxIn(r, pver, msg.Version, ti)
-		if err != nil {
+		if err = readTxIn(r, pver, msg.Version, &txIns[i]); err != nil {
 			returnScriptBuffers()
 			return err
 		}
 
-		totalScriptSize += uint64(len(ti.SignatureScript))
+		totalScriptSize += uint64(len(txIns[i].SignatureScript))
 	}
+
+	msg.TxIn = pointersTo(txIns)
 
 	count, err = ReadVarInt(r, pver)
 	if err != nil {
@@ -446,21 +445,20 @@ func (msg *MsgTx) bsvdecode(r io.Reader, pver uint32, _ MessageEncoding, arena *
 		return messageError("MsgTx.Bsvdecode", str)
 	}
 
-	txOuts := make([]TxOut, count)
-	msg.TxOut = make([]*TxOut, count)
+	txOuts = make([]TxOut, 0, boundedReserve(r, count, MinTxOutPayload))
 
 	for i := uint64(0); i < count; i++ {
-		to := &txOuts[i]
-		msg.TxOut[i] = to
+		txOuts = growByOne(txOuts)
 
-		err = readTxOut(r, pver, msg.Version, to)
-		if err != nil {
+		if err = readTxOut(r, pver, msg.Version, &txOuts[i]); err != nil {
 			returnScriptBuffers()
 			return err
 		}
 
-		totalScriptSize += uint64(len(to.PkScript))
+		totalScriptSize += uint64(len(txOuts[i].PkScript))
 	}
+
+	msg.TxOut = pointersTo(txOuts)
 
 	msg.LockTime, err = binarySerializer.Uint32(r, littleEndian)
 	if err != nil {
@@ -507,12 +505,14 @@ func (msg *MsgTx) bsvdecode(r io.Reader, pver uint32, _ MessageEncoding, arena *
 //   - cap == len on every script slice.
 //   - Oversize scripts (> blockArenaChunkSize) get a private chunk.
 func (msg *MsgTx) bsvdecodeWithArena(r io.Reader, pver uint32, inCount uint64, arena *blockArena) error {
-	txIns := make([]TxIn, inCount)
-	msg.TxIn = make([]*TxIn, inCount)
+	// Grow the input slice as each input is read rather than sizing it from the
+	// declared inCount, so a short streaming frame with a huge count cannot force
+	// an eager allocation before the first input is read (CWE-789).
+	txIns := make([]TxIn, 0, boundedReserve(r, inCount, minTxInPayload))
 
 	for i := uint64(0); i < inCount; i++ {
+		txIns = growByOne(txIns)
 		ti := &txIns[i]
-		msg.TxIn[i] = ti
 
 		err := readOutPoint(r, pver, msg.Version, &ti.PreviousOutPoint)
 		if err != nil {
@@ -544,6 +544,8 @@ func (msg *MsgTx) bsvdecodeWithArena(r io.Reader, pver uint32, inCount uint64, a
 		}
 	}
 
+	msg.TxIn = pointersTo(txIns)
+
 	outCount, err := ReadVarInt(r, pver)
 	if err != nil {
 		return err
@@ -555,12 +557,13 @@ func (msg *MsgTx) bsvdecodeWithArena(r io.Reader, pver uint32, inCount uint64, a
 		return messageError("MsgTx.bsvdecodeWithArena", str)
 	}
 
-	txOuts := make([]TxOut, outCount)
-	msg.TxOut = make([]*TxOut, outCount)
+	// Grow the output slice as each output is read rather than sizing it from the
+	// declared outCount (CWE-789).
+	txOuts := make([]TxOut, 0, boundedReserve(r, outCount, MinTxOutPayload))
 
 	for i := uint64(0); i < outCount; i++ {
+		txOuts = growByOne(txOuts)
 		to := &txOuts[i]
-		msg.TxOut[i] = to
 
 		if err = readElement(r, &to.Value); err != nil {
 			return err
@@ -586,6 +589,8 @@ func (msg *MsgTx) bsvdecodeWithArena(r io.Reader, pver uint32, inCount uint64, a
 		}
 		to.PkScript = s
 	}
+
+	msg.TxOut = pointersTo(txOuts)
 
 	msg.LockTime, err = binarySerializer.Uint32(r, littleEndian)
 	return err

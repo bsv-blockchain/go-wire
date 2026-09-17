@@ -47,23 +47,11 @@ func (msg *MsgNotFound) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding) e
 		return messageError("MsgNotFound.Bsvdecode", str)
 	}
 
-	// Create a contiguous slice of inventory vectors to deserialize into
-	// to reduce the number of allocations.
-	invList := make([]InvVect, count)
-	msg.InvList = make([]*InvVect, 0, count)
+	// Read the inventory vectors into a slice that grows as each is read, so a
+	// short frame with a large count cannot force an eager allocation (CWE-789).
+	msg.InvList, err = decodeInvVects(r, pver, count)
 
-	for i := uint64(0); i < count; i++ {
-		iv := &invList[i]
-
-		err = readInvVect(r, pver, iv)
-		if err != nil {
-			return err
-		}
-
-		_ = msg.AddInvVect(iv)
-	}
-
-	return nil
+	return err
 }
 
 // BsvEncode encodes the receiver to w using the bitcoin protocol encoding.
