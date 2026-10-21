@@ -95,16 +95,17 @@ func (msg *MsgProtoconf) Bsvdecode(r io.Reader, pver uint32, _ MessageEncoding) 
 		// Bound the stream-policies length read from the peer before
 		// allocating: an unbounded make([]byte, vi) panics ("makeslice: len
 		// out of range") or exhausts memory on a crafted length. Mirrors the
-		// cap ReadVarString applies.
+		// cap ReadVarString applies, as does reading the bytes with a buffer
+		// that grows as they arrive rather than one sized from the length.
 		if uint64(vi) > maxMessagePayload() {
 			str := fmt.Sprintf("stream policies length too long "+
 				"[count %d, max %d]", uint64(vi), maxMessagePayload())
 			return messageError("MsgProtoconf.Bsvdecode", str)
 		}
 
-		b := make([]byte, vi)
+		var b []byte
 
-		_, err = io.ReadFull(r, b)
+		b, err = readVarLenBytes(r, uint64(vi))
 		if err != nil {
 			return err
 		}
