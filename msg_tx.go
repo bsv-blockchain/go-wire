@@ -503,7 +503,8 @@ func (msg *MsgTx) bsvdecode(r io.Reader, pver uint32, _ MessageEncoding, arena *
 // copy. The arena ensures:
 //   - Stable slices: previously returned slices are never invalidated.
 //   - cap == len on every script slice.
-//   - Oversize scripts (> blockArenaChunkSize) get a private chunk.
+//   - Oversize scripts (> blockArenaChunkSize) are read outside the arena by
+//     readArenaScript, into a buffer that grows as the bytes arrive.
 func (msg *MsgTx) bsvdecodeWithArena(r io.Reader, pver uint32, inCount uint64, arena *blockArena) error {
 	// Grow the input slice as each input is read rather than sizing it from the
 	// declared inCount, so a short streaming frame with a huge count cannot force
@@ -530,14 +531,9 @@ func (msg *MsgTx) bsvdecodeWithArena(r io.Reader, pver uint32, inCount uint64, a
 			return messageError("MsgTx.bsvdecodeWithArena", str)
 		}
 
-		// Alloc returns nil for scriptLen==0, which is valid (empty script).
-		s := arena.Alloc(int(scriptLen))
-		if scriptLen > 0 {
-			if _, err = io.ReadFull(r, s); err != nil {
-				return err
-			}
+		if ti.SignatureScript, err = readArenaScript(r, scriptLen, arena); err != nil {
+			return err
 		}
-		ti.SignatureScript = s
 
 		if err = readElement(r, &ti.Sequence); err != nil {
 			return err
@@ -581,19 +577,36 @@ func (msg *MsgTx) bsvdecodeWithArena(r io.Reader, pver uint32, inCount uint64, a
 			return messageError("MsgTx.bsvdecodeWithArena", str)
 		}
 
-		s := arena.Alloc(int(scriptLen))
-		if scriptLen > 0 {
-			if _, err = io.ReadFull(r, s); err != nil {
-				return err
-			}
+		if to.PkScript, err = readArenaScript(r, scriptLen, arena); err != nil {
+			return err
 		}
-		to.PkScript = s
 	}
 
 	msg.TxOut = pointersTo(txOuts)
 
 	msg.LockTime, err = binarySerializer.Uint32(r, littleEndian)
 	return err
+}
+
+// readArenaScript reads a script of scriptLen bytes for bsvdecodeWithArena. A
+// standard-sized script is read into an arena slice, so its allocation is bounded
+// by blockArenaChunkSize. An oversize script would otherwise get a private chunk
+// sized from the untrusted length before any byte is read, so it is read with
+// readVarLenBytes instead (CWE-789), which keeps the cap == len guarantee. A
+// zero-length script is returned as nil, which is valid (empty script).
+func readArenaScript(r io.Reader, scriptLen uint64, arena *blockArena) ([]byte, error) {
+	if scriptLen > blockArenaChunkSize {
+		return readVarLenBytes(r, scriptLen)
+	}
+
+	s := arena.Alloc(int(scriptLen))
+	if scriptLen > 0 {
+		if _, err := io.ReadFull(r, s); err != nil {
+			return nil, err
+		}
+	}
+
+	return s, nil
 }
 
 // Deserialize decodes a transaction from r into the receiver using a format
@@ -804,6 +817,14 @@ func readScript(r io.Reader, pver uint32, maxAllowed uint64, fieldName string) (
 		str := fmt.Sprintf("%s is larger than the max allowed size "+
 			"[count %d, max %d]", fieldName, count, maxAllowed)
 		return nil, messageError("readScript", str)
+	}
+
+	// A script too large for a free-list buffer would otherwise get a fresh
+	// allocation sized from the untrusted length before any byte is read, so it
+	// is read into a buffer that grows as the bytes arrive (CWE-789). Its
+	// capacity never equals freeListMaxScriptSize, so scriptPool.Return ignores it.
+	if count > freeListMaxScriptSize {
+		return readVarLenBytes(r, count)
 	}
 
 	b := scriptPool.Borrow(count)

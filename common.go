@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -689,6 +690,94 @@ func growByOne[T any](s []T) []T {
 	return append(s, zero)
 }
 
+// varLenPreallocReserve caps, in bytes, the buffer readVarLenBytes reserves up
+// front for a length-prefixed field whose bytes are not known to be present (a
+// streaming or bare io.Reader, see readerRemaining). Nearly every real script or
+// string fits, so it is still read with a single allocation; a larger field grows
+// as its bytes arrive, while a huge declared length with a short body allocates
+// at most this much before failing on EOF (CWE-789).
+const varLenPreallocReserve = 64 * 1024
+
+// readVarLenBytes reads count bytes from r into a new slice, where count is a
+// byte length decoded from the wire (a var string, var bytes or script length)
+// that the caller has already checked against the field's maximum. Like the
+// element decoders it never sizes the buffer from the untrusted count alone
+// (CWE-789):
+//
+//   - When r exposes its real remaining length (in-memory readers), a field the
+//     remaining bytes can back is read with a single exact allocation, as before.
+//     One they cannot back is certain to fail, so its bytes are consumed, as
+//     io.ReadFull would, without allocating at all.
+//   - Otherwise (streaming / bare reader, where the declared payload length is not
+//     proof the bytes exist) the field is read in chunks of at most
+//     varLenPreallocReserve bytes, doubling as bytes actually arrive, and the
+//     chunks are joined once the whole field is present. Memory therefore tracks
+//     the bytes received, a field that fits one chunk costs a single allocation,
+//     and a larger one is copied exactly once.
+//
+// As with make([]byte, count), the returned slice has len == cap == count. A
+// short field fails as a single io.ReadFull of count bytes would: io.EOF when
+// none of its bytes were read, otherwise io.ErrUnexpectedEOF.
+func readVarLenBytes(r io.Reader, count uint64) ([]byte, error) {
+	chunkSize := min(count, varLenPreallocReserve)
+
+	if remaining, ok := readerRemaining(r); ok {
+		if count > remaining {
+			return nil, discardUnbackedField(r, remaining)
+		}
+
+		chunkSize = count
+	}
+
+	var (
+		chunks   [][]byte
+		received uint64
+	)
+
+	for {
+		chunk := make([]byte, min(chunkSize, count-received))
+
+		if _, err := io.ReadFull(r, chunk); err != nil {
+			// io.ReadFull reports io.EOF only when this chunk read nothing; once
+			// earlier chunks consumed bytes, the field as a whole is truncated.
+			if received > 0 && errors.Is(err, io.EOF) {
+				err = io.ErrUnexpectedEOF
+			}
+
+			return nil, err
+		}
+
+		received += uint64(len(chunk))
+
+		if received == count {
+			if chunks == nil {
+				return chunk, nil
+			}
+
+			return bytes.Join(append(chunks, chunk), nil), nil
+		}
+
+		chunks = append(chunks, chunk)
+		chunkSize *= 2
+	}
+}
+
+// discardUnbackedField handles a field whose declared length exceeds the
+// remaining bytes of an in-memory reader, so reading it is certain to fail. It
+// consumes those bytes without allocating and returns the error io.ReadFull
+// would: io.EOF when none remain, otherwise io.ErrUnexpectedEOF.
+func discardUnbackedField(r io.Reader, remaining uint64) error {
+	if _, err := io.Copy(io.Discard, r); err != nil {
+		return err
+	}
+
+	if remaining == 0 {
+		return io.EOF
+	}
+
+	return io.ErrUnexpectedEOF
+}
+
 // pointersTo returns a slice of pointers to each element of s. It is called after
 // a grow-as-read decode loop completes, when s (and therefore the addresses of its
 // elements) is stable, to build the []*T view the message types expose.
@@ -797,7 +886,9 @@ func VarIntSerializeSize(val uint64) int {
 // containing the length of the string followed by the bytes that represent the
 // string itself.  An error is returned if the length is greater than the
 // maximum block payload size since it helps protect against memory exhaustion
-// attacks and forced panics through malformed messages.
+// attacks and forced panics through malformed messages.  The string's buffer
+// grows with the bytes actually read rather than being allocated from the
+// declared length up front (see readVarLenBytes).
 func ReadVarString(r io.Reader, pver uint32) (string, error) {
 	count, err := ReadVarInt(r, pver)
 	if err != nil {
@@ -814,9 +905,7 @@ func ReadVarString(r io.Reader, pver uint32) (string, error) {
 		return "", messageError("ReadVarString", str)
 	}
 
-	buf := make([]byte, count)
-
-	_, err = io.ReadFull(r, buf)
+	buf, err := readVarLenBytes(r, count)
 	if err != nil {
 		return "", err
 	}
@@ -844,7 +933,8 @@ func WriteVarString(w io.Writer, pver uint32, str string) error {
 // passed maxAllowed parameter which helps protect against memory exhaustion
 // attacks and forced panics through malformed messages.  The fieldName
 // parameter is only used for the error message so it provides more context in
-// the error.
+// the error.  The returned slice grows with the bytes actually read rather than
+// being allocated from the declared length up front (see readVarLenBytes).
 func ReadVarBytes(r io.Reader, pver uint32, maxAllowed uint64,
 	fieldName string,
 ) ([]byte, error) {
@@ -863,14 +953,7 @@ func ReadVarBytes(r io.Reader, pver uint32, maxAllowed uint64,
 		return nil, messageError("ReadVarBytes", str)
 	}
 
-	b := make([]byte, count)
-
-	_, err = io.ReadFull(r, b)
-	if err != nil {
-		return nil, err
-	}
-
-	return b, nil
+	return readVarLenBytes(r, count)
 }
 
 // WriteVarBytes serializes a variable length byte array to w as a varInt
