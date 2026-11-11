@@ -1,0 +1,6 @@
+go-wire
+Copyright 2025-2026 BSV Association
+
+This product includes software from these projects, under their own licenses:
+- btcd, through bsvd: Copyright (c) 2013-2017 The btcsuite developers (ISC)
+- dcrd, through bsvd: Copyright (c) 2015-2016 The Decred developers (ISC)
